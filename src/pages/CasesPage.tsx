@@ -1,0 +1,25 @@
+import React from 'react';
+import { Card, Typography, Empty } from 'antd';
+import { BookOutlined } from '@ant-design/icons';
+
+const { Title } = Typography;
+
+const CasesPage: React.FC = () => {
+  return (
+    <div style={{ padding: '24px', minHeight: 'calc(100vh - 160px)' }}>
+      <Card>
+        <Empty
+          image={<BookOutlined style={{ fontSize: '64px', color: '#1890ff' }} />}
+          description={
+            <div>
+              <Title level={3}>病例训练模块</Title>
+              <p>此功能正在开发中，敬请期待...</p>
+            </div>
+          }
+        />
+      </Card>
+    </div>
+  );
+};
+
+export default CasesPage; 
