@@ -10,6 +10,7 @@ export interface AgentActResponse {
   answer: string;
   steps: number;
   actions: Array<{ step: number; tool: string; args: any; status: number; ok: boolean }>;
+  citations?: Array<{ pmid: string; title: string; url: string }>;
 }
 
 export const agentApi = {
@@ -19,4 +20,3 @@ export const agentApi = {
     return resp.data as AgentActResponse;
   },
 };
-

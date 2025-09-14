@@ -1,78 +1,5 @@
 const axios = require('axios');
-const admin = require('firebase-admin');
-
-const DISABLE_DB = String(process.env.DISABLE_DB || '').toLowerCase() === 'true';
-
-// controllers as tools
-const pubmedController = require('./pubmedController');
-const caseController = require('./caseController');
-
-// Helper: call an express-style controller and capture its JSON
-function callController(controllerFn, { method = 'GET', path = '/', body = {}, query = {}, headers = {}, user = null } = {}) {
-  return new Promise((resolve, reject) => {
-    const req = {
-      method,
-      path,
-      body,
-      query,
-      headers,
-      user,
-      params: body && body.id ? { id: body.id } : {},
-    };
-    const res = {
-      status(code) { this.statusCode = code; return this; },
-      json(payload) { resolve({ statusCode: this.statusCode || 200, ...payload }); },
-    };
-    try { controllerFn(req, res); } catch (e) { reject(e); }
-  });
-}
-
-// Tool declarations (Gemini function calling)
-const toolDeclarations = [
-  {
-    name: 'pubmed.search',
-    description: 'Search PubMed articles with optional filters',
-    parameters: {
-      type: 'OBJECT',
-      properties: {
-        query: { type: 'STRING' },
-        journal: { type: 'STRING' },
-        author: { type: 'STRING' },
-        startDate: { type: 'STRING' },
-        endDate: { type: 'STRING' },
-        sortBy: { type: 'STRING', description: 'relevance|date|citations' }
-      },
-      required: ['query']
-    }
-  },
-  {
-    name: 'pubmed.get_article',
-    description: 'Get details of a PubMed article by PMID',
-    parameters: {
-      type: 'OBJECT',
-      properties: { pmid: { type: 'STRING' } },
-      required: ['pmid']
-    }
-  },
-  {
-    name: 'cases.get',
-    description: 'Get a medical training case by id',
-    parameters: {
-      type: 'OBJECT',
-      properties: { id: { type: 'STRING' }, includeAnswer: { type: 'BOOLEAN' } },
-      required: ['id']
-    }
-  },
-  {
-    name: 'cases.diagnose',
-    description: 'Submit a diagnosis for a case and receive feedback (requires auth)',
-    parameters: {
-      type: 'OBJECT',
-      properties: { id: { type: 'STRING' }, diagnosis: { type: 'STRING' } },
-      required: ['id', 'diagnosis']
-    }
-  }
-];
+const { toolDeclarations, runToolByName } = require('../lib/agentTools');
 
 function buildInitialPrompt(goal, context, mode) {
   return [
@@ -111,43 +38,7 @@ function extractText(parts) {
   return out || null;
 }
 
-async function runToolByName(name, args, reqUser) {
-  switch (name) {
-    case 'pubmed.search': {
-      const result = await callController(pubmedController.searchPubMed, { method: 'GET', path: '/api/pubmed/search', query: { ...args } });
-      return result;
-    }
-    case 'pubmed.get_article': {
-      const pmid = args.pmid;
-      const req = { params: { pmid } };
-      // direct call variant
-      return new Promise((resolve) => {
-        const res = { status(c){this.c=c;return this;}, json(payload){ resolve({ statusCode: this.c||200, ...payload }); } };
-        pubmedController.getArticleDetails({ params: { pmid } }, res);
-      });
-    }
-    case 'cases.get': {
-      const id = args.id;
-      const includeAnswer = !!args.includeAnswer;
-      return new Promise((resolve) => {
-        const res = { status(c){this.c=c;return this;}, json(payload){ resolve({ statusCode: this.c||200, ...payload }); } };
-        caseController.getCaseById({ params: { id }, query: { includeAnswer: includeAnswer ? 'true' : 'false' } }, res);
-      });
-    }
-    case 'cases.diagnose': {
-      if (!reqUser) {
-        return { statusCode: 401, success: false, error: '需要认证才能提交诊断' };
-      }
-      const id = args.id; const diagnosis = args.diagnosis;
-      return new Promise((resolve) => {
-        const res = { status(c){this.c=c;return this;}, json(payload){ resolve({ statusCode: this.c||200, ...payload }); } };
-        caseController.submitDiagnosis({ params: { id }, body: { diagnosis }, user: reqUser }, res);
-      });
-    }
-    default:
-      return { statusCode: 400, success: false, error: `未知工具: ${name}` };
-  }
-}
+// runToolByName imported
 
 exports.act = async (req, res) => {
   try {
@@ -159,6 +50,7 @@ exports.act = async (req, res) => {
     const apiKey = process.env.GEMINI_API_KEY;
     const apiUrl = process.env.GEMINI_API_URL || 'https://generativelanguage.googleapis.com/v1beta';
     const stepsLog = [];
+    const citations = [];
 
     // 如果没有 API Key，则走模拟代理
     if (!apiKey) {
@@ -178,6 +70,12 @@ exports.act = async (req, res) => {
         const args = typeof fn.args === 'string' ? JSON.parse(fn.args || '{}') : (fn.args || {});
         const result = await runToolByName(fn.name, args, req.user || null);
         stepsLog.push({ step: step + 1, tool: fn.name, args, status: result.statusCode, ok: result.success !== false });
+        // collect citations from pubmed.search
+        if (fn.name === 'pubmed.search' && result?.success && Array.isArray(result.data)) {
+          for (const a of result.data.slice(0, 3)) {
+            citations.push({ pmid: a.pmid, title: a.title, url: a.url });
+          }
+        }
         // 把工具结果反馈给模型
         contents.push({
           role: 'user',
@@ -196,10 +94,12 @@ exports.act = async (req, res) => {
       finalText = extractText(parts) || '（未能生成答案，请稍后重试）';
     }
 
-    return res.json({ success: true, data: { answer: finalText, steps: stepsLog.length, actions: stepsLog } });
+    // append standard disclaimer
+    const disclaimer = '\n\n—\n说明：本回答仅用于医学教育与信息检索，不构成诊疗建议。如有紧急或严重症状，请及时就医。';
+    const answerOut = finalText ? (finalText + disclaimer) : disclaimer;
+    return res.json({ success: true, data: { answer: answerOut, steps: stepsLog.length, actions: stepsLog, citations } });
   } catch (error) {
     console.error('Agent error:', error.message);
     return res.status(500).json({ success: false, error: '代理执行失败', detail: process.env.NODE_ENV === 'development' ? error.message : undefined });
   }
 };
-

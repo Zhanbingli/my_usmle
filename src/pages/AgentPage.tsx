@@ -128,6 +128,21 @@ const AgentPage: React.FC = () => {
                 )}
               />
             )}
+            {result.citations && result.citations.length > 0 && (
+              <>
+                <Divider />
+                <Title level={5}>参考文献</Title>
+                <List
+                  size="small"
+                  dataSource={result.citations}
+                  renderItem={(c) => (
+                    <List.Item>
+                      <a href={c.url} target="_blank" rel="noreferrer">[{c.pmid}] {c.title}</a>
+                    </List.Item>
+                  )}
+                />
+              </>
+            )}
           </Card>
         )}
       </div>
@@ -136,4 +151,3 @@ const AgentPage: React.FC = () => {
 };
 
 export default AgentPage;
-
