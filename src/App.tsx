@@ -18,6 +18,7 @@ const ArticleDetailPage = React.lazy(() => import('./pages/ArticleDetailPage'));
 const LoginPage = React.lazy(() => import('./pages/LoginPage'));
 const ProfilePage = React.lazy(() => import('./pages/ProfilePage'));
 const AnalyticsPage = React.lazy(() => import('./pages/AnalyticsPage'));
+const AgentPage = React.lazy(() => import('./pages/AgentPage'));
 
 // 创建 React Query 客户端
 const queryClient = new QueryClient({
@@ -175,6 +176,14 @@ const AppContent: React.FC = () => {
               element={
                 <ProtectedRoute>
                   <QueryPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/agent" 
+              element={
+                <ProtectedRoute>
+                  <AgentPage />
                 </ProtectedRoute>
               } 
             />
