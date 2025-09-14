@@ -124,6 +124,7 @@ app.use('/api/cases/:id/diagnose', authenticateUser);
 const geminiController = require('./controllers/geminiController');
 const pubmedController = require('./controllers/pubmedController');
 const caseController = require('./controllers/caseController');
+const agentController = require('./controllers/agentController');
 
 // 健康检查 - 支持两种路径
 app.get('/health', (req, res) => {
@@ -254,6 +255,7 @@ app.use('/api/user', userRouter);
 app.use('/api/gemini', geminiRouter);
 app.use('/api/pubmed', pubmedRouter);
 app.use('/api/cases', caseRouter);
+app.use('/api/agent', agentRouter);
 
 // 为了兼容性，保留原有的无前缀路由
 app.use('/gemini', geminiRouter);
@@ -289,4 +291,6 @@ exports.api = onRequest(
     secrets: [geminiApiKey]
   },
   app
+const agentRouter = express.Router();
+agentRouter.post('/act', rateLimiter(30, 60 * 1000), agentController.act);
 ); 

@@ -64,6 +64,7 @@ app.use((req, res, next) => {
 const geminiController = require('./controllers/geminiController');
 const pubmedController = require('./controllers/pubmedController');
 const caseController = require('./controllers/caseController');
+const agentController = require('./controllers/agentController');
 
 // 简单认证中间件（开发环境）
 const db = admin.firestore();
@@ -145,9 +146,13 @@ caseRouter.get('/', caseController.getAllCases);
 caseRouter.get('/:id', caseController.getCaseById);
 caseRouter.post('/:id/diagnose', caseController.submitDiagnosis);
 
+const agentRouter = express.Router();
+agentRouter.post('/act', rateLimiter(30, 60 * 1000), agentController.act);
+
 app.use('/api/gemini', geminiRouter);
 app.use('/api/pubmed', pubmedRouter);
 app.use('/api/cases', caseRouter);
+app.use('/api/agent', agentRouter);
 
 // 404处理
 app.use('*', (req, res) => {
