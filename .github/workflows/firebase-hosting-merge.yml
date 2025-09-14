@@ -29,8 +29,8 @@ jobs:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_LIZHANBING }}
       - name: Install Firebase CLI
         run: npm install -g firebase-tools
-      - name: Deploy Cloud Functions
-        run: firebase deploy --only functions --project lizhanbing
+      - name: Deploy Cloud Functions (force delete missing)
+        run: firebase deploy --only functions --project lizhanbing --force
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
