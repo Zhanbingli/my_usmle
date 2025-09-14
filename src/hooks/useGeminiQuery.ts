@@ -6,23 +6,44 @@ import { MessageRole } from '../types';
 // 发送消息到AI
 export const useSendMessage = () => {
   const queryClient = useQueryClient();
-  const { addMessage, currentSession } = useQueryStore();
+  const { addMessage, currentSession, setCurrentSession } = useQueryStore();
 
   return useMutation({
     mutationFn: geminiApi.sendMessage,
     onMutate: async (variables: SendMessageRequest) => {
+      // 如果没有当前会话，先创建一个
+      let sessionToUse = currentSession;
+      if (!sessionToUse && variables.sessionId) {
+        // 创建会话对象
+        sessionToUse = {
+          id: variables.sessionId,
+          title: variables.message.length > 30 
+            ? variables.message.substring(0, 30) + '...' 
+            : variables.message,
+          messages: [],
+          userId: 'current-user',
+          status: 'active' as any,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+        setCurrentSession(sessionToUse);
+      }
+
       // 乐观更新：立即添加用户消息
-      if (currentSession) {
-        addMessage(currentSession.id, {
+      if (sessionToUse) {
+        addMessage(sessionToUse.id, {
           role: MessageRole.USER,
           content: variables.message,
         });
       }
     },
     onSuccess: (data, variables) => {
-      // 添加AI回复
-      if (currentSession) {
-        addMessage(currentSession.id, {
+      // 获取会话ID，使用返回的或变量中的
+      const sessionId = data.sessionId !== 'new' ? data.sessionId : variables.sessionId;
+      
+      if (sessionId) {
+        // 添加AI回复
+        addMessage(sessionId, {
           role: MessageRole.ASSISTANT,
           content: data.response,
         });
@@ -33,7 +54,7 @@ export const useSendMessage = () => {
     },
     onError: (error, variables) => {
       console.error('Failed to send message:', error);
-      // 可以在这里处理错误，比如显示错误消息
+      // 可以在这里移除乐观添加的消息或显示错误
     },
   });
 };

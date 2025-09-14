@@ -8,11 +8,12 @@ import {
   UserOutlined,
   LogoutOutlined,
   SettingOutlined,
-  MedicineBoxOutlined
+  MedicineBoxOutlined,
+  CrownOutlined,
+  BarChartOutlined
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useUserStore } from '../../stores/useUserStore';
-import { UserRole } from '../../types';
+import { useAuth } from '../../contexts/AuthContext';
 
 const { Header: AntHeader } = Layout;
 const { Text } = Typography;
@@ -20,7 +21,7 @@ const { Text } = Typography;
 const Header: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, isAuthenticated, logout } = useUserStore();
+  const { currentUser, userProfile, isLoggedIn, logout } = useAuth();
 
   const menuItems = [
     {
@@ -43,13 +44,45 @@ const Header: React.FC = () => {
       icon: <SearchOutlined />,
       label: 'PubMed检索',
     },
+    // 只有管理员才能看到数据分析
+    ...(userProfile?.role === 'admin' ? [{
+      key: '/analytics',
+      icon: <BarChartOutlined />,
+      label: '数据分析',
+    }] : [])
   ];
+
+  const handleUserMenuClick = ({ key }: { key: string }) => {
+    switch (key) {
+      case 'profile':
+        navigate('/profile');
+        break;
+      case 'subscription':
+        // 跳转到个人资料页面的订阅管理标签页
+        navigate('/profile', { state: { activeTab: 'subscription' } });
+        break;
+      case 'settings':
+        // 可以跳转到设置页面或打开设置模态框
+        navigate('/profile');
+        break;
+      case 'logout':
+        logout();
+        break;
+      default:
+        break;
+    }
+  };
 
   const userMenuItems = [
     {
       key: 'profile',
       icon: <UserOutlined />,
       label: '个人资料',
+    },
+    {
+      key: 'subscription',
+      icon: <CrownOutlined />,
+      label: '订阅管理',
     },
     {
       key: 'settings',
@@ -63,10 +96,6 @@ const Header: React.FC = () => {
       key: 'logout',
       icon: <LogoutOutlined />,
       label: '退出登录',
-      onClick: () => {
-        logout();
-        navigate('/');
-      },
     },
   ];
 
@@ -75,16 +104,11 @@ const Header: React.FC = () => {
   };
 
   const handleLogin = () => {
-    // 模拟登录 - 在实际应用中这里应该跳转到登录页面
-    const mockUser = {
-      id: '1',
-      email: 'demo@example.com',
-      name: '演示用户',
-      role: UserRole.STUDENT,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    useUserStore.getState().setUser(mockUser);
+    navigate('/login');
+  };
+
+  const handleRegister = () => {
+    navigate('/login'); // 登录页面包含注册功能
   };
 
   return (
@@ -107,8 +131,8 @@ const Header: React.FC = () => {
           gap: '8px',
           cursor: 'pointer'
         }} onClick={() => navigate('/')}>
-          <MedicineBoxOutlined style={{ fontSize: '24px', color: '#1890ff' }} />
-          <Text strong style={{ fontSize: '18px', color: '#1890ff' }}>
+          <MedicineBoxOutlined style={{ fontSize: '24px', color: '#667eea' }} />
+          <Text strong style={{ fontSize: '18px', color: '#667eea' }}>
             医学AI平台
           </Text>
         </div>
@@ -130,18 +154,22 @@ const Header: React.FC = () => {
 
       {/* User Actions */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-        {isAuthenticated && user ? (
+        {isLoggedIn && currentUser && userProfile ? (
           <Dropdown
-            menu={{ items: userMenuItems }}
+            menu={{ 
+              items: userMenuItems,
+              onClick: handleUserMenuClick
+            }}
             placement="bottomRight"
             trigger={['click']}
           >
             <Space style={{ cursor: 'pointer' }}>
               <Avatar 
                 icon={<UserOutlined />} 
-                style={{ backgroundColor: '#1890ff' }}
+                src={currentUser.photoURL}
+                style={{ backgroundColor: '#667eea' }}
               />
-              <Text>{user.name}</Text>
+              <Text>{userProfile.displayName}</Text>
             </Space>
           </Dropdown>
         ) : (
@@ -149,7 +177,7 @@ const Header: React.FC = () => {
             <Button type="default" onClick={handleLogin}>
               登录
             </Button>
-            <Button type="primary">
+            <Button type="primary" onClick={handleRegister}>
               注册
             </Button>
           </Space>

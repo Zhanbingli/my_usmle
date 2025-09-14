@@ -64,6 +64,69 @@ node_modules/
 
 # dotenv environment variables file
 .env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
 # dataconnect generated files
 .dataconnect
+
+# ========== 新增安全项 ==========
+# Build outputs
+build/
+dist/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+ehthumbs.db
+
+# API keys and secrets
+*.key
+*.pem
+*.p12
+*.pfx
+*.cert
+
+# Firebase service account keys
+*-firebase-adminsdk-*.json
+service-account*.json
+
+# Local configuration files that might contain secrets
+config.local.js
+config.local.ts
+firebase-config.local.*
+
+# Backup files
+*.backup
+*.bak
+
+# Temporary files
+.tmp/
+.temp/
+
+# Package manager lock files (choose one)
+# package-lock.json
+# yarn.lock
+
+# Testing
+coverage/
+.nyc_output/
+test-results/
+playwright-report/
+
+# Performance monitoring
+.performance/
+
+# Documentation build
+docs/build/

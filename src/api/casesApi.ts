@@ -1,9 +1,9 @@
 import { apiClient } from '../utils/api';
-import { Case, Difficulty, Specialty, PaginationParams } from '../types';
+import { Case, PaginationParams } from '../types';
 
 export interface CaseFilters {
-  difficulty?: Difficulty;
-  specialty?: Specialty;
+  difficulty?: string;
+  category?: string;
   search?: string;
 }
 
@@ -18,27 +18,29 @@ export interface CaseAttempt {
   id: string;
   caseId: string;
   userId: string;
-  answers: Record<string, any>;
-  score: number;
-  completed: boolean;
-  timeSpent: number; // in seconds
+  diagnosis: string;
+  isCorrect: boolean;
+  feedback: string;
+  timeSpent?: number; // in seconds
   createdAt: string;
-  updatedAt: string;
+  updatedAt?: string;
+}
+
+export interface DiagnosisResponse {
+  isCorrect: boolean;
+  correctDiagnosis: string;
+  feedback: string;
 }
 
 export const casesApi = {
-  // 获取病例列表
-  async getCases(
-    pagination: PaginationParams,
-    filters?: CaseFilters
-  ): Promise<CasesResponse> {
-    const params = new URLSearchParams({
-      page: pagination.page.toString(),
-      pageSize: pagination.pageSize.toString(),
-      ...filters,
-    });
+  // 获取病例列表（简化版，不需要分页参数）
+  async getCases(filters?: CaseFilters): Promise<Case[]> {
+    const params = new URLSearchParams();
+    if (filters?.category) params.append('category', filters.category);
+    if (filters?.difficulty) params.append('difficulty', filters.difficulty);
+    if (filters?.search) params.append('search', filters.search);
 
-    const response = await apiClient.get<CasesResponse>(`/cases?${params}`);
+    const response = await apiClient.get<Case[]>(`/cases?${params}`);
     if (!response.success) {
       throw new Error(response.error || 'Failed to get cases');
     }
@@ -46,16 +48,30 @@ export const casesApi = {
   },
 
   // 获取单个病例详情
-  async getCaseById(id: string): Promise<Case> {
-    const response = await apiClient.get<Case>(`/cases/${id}`);
+  async getCaseById(id: string, includeAnswer: boolean = false): Promise<Case> {
+    const params = new URLSearchParams();
+    if (!includeAnswer) params.append('includeAnswer', 'false');
+
+    const response = await apiClient.get<Case>(`/cases/${id}?${params}`);
     if (!response.success) {
       throw new Error(response.error || 'Failed to get case');
     }
     return response.data!;
   },
 
+  // 提交诊断
+  async submitDiagnosis(caseId: string, diagnosis: string): Promise<DiagnosisResponse> {
+    const response = await apiClient.post<DiagnosisResponse>(`/cases/${caseId}/diagnose`, {
+      diagnosis,
+    });
+    if (!response.success) {
+      throw new Error(response.error || 'Failed to submit diagnosis');
+    }
+    return response.data!;
+  },
+
   // 获取用户的病例尝试记录
-  async getUserCaseAttempts(userId: string): Promise<CaseAttempt[]> {
+  async getUserAttempts(userId: string): Promise<CaseAttempt[]> {
     const response = await apiClient.get<CaseAttempt[]>(`/cases/users/${userId}/attempts`);
     if (!response.success) {
       throw new Error(response.error || 'Failed to get case attempts');
@@ -63,16 +79,23 @@ export const casesApi = {
     return response.data!;
   },
 
-  // 提交病例答案
-  async submitCaseAttempt(
-    caseId: string,
-    answers: Record<string, any>
-  ): Promise<CaseAttempt> {
-    const response = await apiClient.post<CaseAttempt>(`/cases/${caseId}/submit`, {
-      answers,
+  // 保持旧的API兼容性
+  async getCasesWithPagination(
+    pagination: PaginationParams,
+    filters?: CaseFilters
+  ): Promise<CasesResponse> {
+    const params = new URLSearchParams({
+      page: pagination.page.toString(),
+      pageSize: pagination.pageSize.toString(),
     });
+    
+    if (filters?.category) params.append('category', filters.category);
+    if (filters?.difficulty) params.append('difficulty', filters.difficulty);
+    if (filters?.search) params.append('search', filters.search);
+
+    const response = await apiClient.get<CasesResponse>(`/cases/paginated?${params}`);
     if (!response.success) {
-      throw new Error(response.error || 'Failed to submit case attempt');
+      throw new Error(response.error || 'Failed to get cases');
     }
     return response.data!;
   },

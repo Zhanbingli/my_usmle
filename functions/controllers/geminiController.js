@@ -1,4 +1,16 @@
 const axios = require('axios');
+const functions = require('firebase-functions');
+const admin = require('firebase-admin');
+const db = admin.firestore();
+const DISABLE_DB = String(process.env.DISABLE_DB || '').toLowerCase() === 'true';
+
+// 获取环境配置（Firebase Functions v2使用secrets）
+const getConfig = () => {
+  return {
+    apiKey: process.env.GEMINI_API_KEY, // Firebase会将secret设置为环境变量
+    apiUrl: process.env.GEMINI_API_URL || 'https://generativelanguage.googleapis.com/v1beta'
+  };
+};
 
 // 模拟回答，当Gemini API无法访问时使用
 const mockResponses = {
@@ -72,74 +84,83 @@ const mockResponses = {
  */
 exports.processMedicalQuery = async (req, res) => {
   try {
-    const { query, context = '', temperature = 0.7 } = req.body;
-    
-    if (!query) {
-      return res.status(400).json({
-        success: false,
-        message: '请提供查询内容'
-      });
+    const { query, context = '', temperature = 0.7, sessionId: inputSessionId } = req.body || {};
+    if (typeof query !== 'string' || query.trim().length === 0) {
+      return res.status(400).json({ success: false, message: '请提供查询内容' });
+    }
+    if (query.length > 2000) {
+      return res.status(400).json({ success: false, message: '查询内容过长（>2000字）' });
     }
 
-    const apiKey = process.env.GEMINI_API_KEY;
-    const apiUrl = `${process.env.GEMINI_API_URL}/models/gemini-1.5-pro:generateContent?key=${apiKey}`;
-    
-    // 构建提示词，包含医学专业背景
-    const medicalPrompt = `你是一位经验丰富的医学顾问，拥有广泛的医学知识和临床经验。
-    请根据以下问题提供准确、专业的医学建议和信息。如有必要，请提供诊断思路、鉴别诊断和治疗建议。
-    同时，如果信息不足，请指出需要进一步询问哪些内容。
+    const config = getConfig();
+    const { apiKey, apiUrl } = config;
+    const userId = req.user?.uid || 'anonymous';
+    let sessionId = inputSessionId;
 
-    问题: ${query}
-    
-    ${context ? `背景信息: ${context}` : ''}`;
-    
-    try {
-      const response = await axios.post(apiUrl, {
-        contents: [
-          {
-            parts: [
-              {
-                text: medicalPrompt
-              }
-            ]
+    // 无 API key：用模拟并持久化
+    if (!apiKey) {
+      if (!DISABLE_DB) {
+        try {
+          if (!sessionId) {
+            const newRef = db.collection('sessions').doc();
+            sessionId = newRef.id;
+            await newRef.set({ userId, title: query.length > 30 ? query.substring(0, 30) + '...' : query, createdAt: admin.firestore.FieldValue.serverTimestamp(), updatedAt: admin.firestore.FieldValue.serverTimestamp() });
+          } else {
+            await db.collection('sessions').doc(sessionId).update({ updatedAt: admin.firestore.FieldValue.serverTimestamp() });
           }
-        ],
-        generationConfig: {
-          temperature: temperature,
-          maxOutputTokens: 2048,
-        }
-      });
-      
+          const msgs = db.collection('sessions').doc(sessionId).collection('messages');
+          await msgs.add({ role: 'user', content: query, createdAt: admin.firestore.FieldValue.serverTimestamp() });
+          await msgs.add({ role: 'assistant', content: mockResponses.medical, createdAt: admin.firestore.FieldValue.serverTimestamp() });
+        } catch (e) { console.error('Persist mock session failed:', e); }
+      }
+      return res.status(200).json({ success: true, data: { answer: mockResponses.medical, query, source: 'mock', reason: 'API key not configured', sessionId } });
+    }
+
+    const fullApiUrl = `${apiUrl}/models/gemini-1.5-pro:generateContent?key=${apiKey}`;
+    const medicalPrompt = `你是一位经验丰富的医学顾问，拥有广泛的医学知识和临床经验。\n请根据以下问题提供准确、专业的医学建议和信息。如有必要，请提供诊断思路、鉴别诊断和治疗建议。\n同时，如果信息不足，请指出需要进一步询问哪些内容。\n\n问题: ${query}\n\n${context ? `背景信息: ${context}` : ''}\n\n请针对具体问题给出详细且个性化的回答。`;
+
+    try {
+      const response = await axios.post(fullApiUrl, { contents: [{ parts: [{ text: medicalPrompt }] }], generationConfig: { temperature, maxOutputTokens: 2048, topP: 0.8, topK: 40 } }, { timeout: 30000, headers: { 'Content-Type': 'application/json' } });
+      if (!response.data?.candidates?.[0]?.content?.parts?.[0]?.text) {
+        throw new Error('Invalid response structure from Gemini API');
+      }
       const generatedText = response.data.candidates[0].content.parts[0].text;
-      
-      return res.status(200).json({
-        success: true,
-        data: {
-          answer: generatedText,
-          query: query
-        }
-      });
+      if (!DISABLE_DB) {
+        try {
+          if (!sessionId) {
+            const newRef = db.collection('sessions').doc();
+            sessionId = newRef.id;
+            await newRef.set({ userId, title: query.length > 30 ? query.substring(0, 30) + '...' : query, createdAt: admin.firestore.FieldValue.serverTimestamp(), updatedAt: admin.firestore.FieldValue.serverTimestamp() });
+          } else {
+            await db.collection('sessions').doc(sessionId).update({ updatedAt: admin.firestore.FieldValue.serverTimestamp() });
+          }
+          const msgs = db.collection('sessions').doc(sessionId).collection('messages');
+          await msgs.add({ role: 'user', content: query, createdAt: admin.firestore.FieldValue.serverTimestamp() });
+          await msgs.add({ role: 'assistant', content: generatedText, createdAt: admin.firestore.FieldValue.serverTimestamp() });
+        } catch (e) { console.error('Persist session failed:', e); }
+      }
+      return res.status(200).json({ success: true, data: { answer: generatedText, query, source: 'gemini', sessionId } });
     } catch (error) {
-      console.error('Gemini API Error:', error.response?.data || error.message);
-      
-      // 使用模拟回答
-      return res.status(200).json({
-        success: true,
-        data: {
-          answer: mockResponses.medical,
-          query: query,
-          source: 'mock' // 标记为模拟数据
-        }
-      });
+      const fallback = `**注意：当前使用模拟回答，因为AI服务暂时不可用**\n\n${mockResponses.medical}\n\n*请稍后重试以获取AI个性化回答*`;
+      if (!DISABLE_DB) {
+        try {
+          if (!sessionId) {
+            const newRef = db.collection('sessions').doc();
+            sessionId = newRef.id;
+            await newRef.set({ userId, title: query.length > 30 ? query.substring(0, 30) + '...' : query, createdAt: admin.firestore.FieldValue.serverTimestamp(), updatedAt: admin.firestore.FieldValue.serverTimestamp() });
+          } else {
+            await db.collection('sessions').doc(sessionId).update({ updatedAt: admin.firestore.FieldValue.serverTimestamp() });
+          }
+          const msgs = db.collection('sessions').doc(sessionId).collection('messages');
+          await msgs.add({ role: 'user', content: query, createdAt: admin.firestore.FieldValue.serverTimestamp() });
+          await msgs.add({ role: 'assistant', content: fallback, createdAt: admin.firestore.FieldValue.serverTimestamp() });
+        } catch (e) { console.error('Persist mock-on-error session failed:', e); }
+      }
+      return res.status(200).json({ success: true, data: { answer: fallback, query, source: 'mock', reason: 'API call failed', error: error.message, sessionId } });
     }
   } catch (error) {
     console.error('Gemini Controller Error:', error.message);
-    
-    return res.status(500).json({
-      success: false,
-      message: '处理查询时出错',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
+    return res.status(500).json({ success: false, message: '处理查询时出错', error: process.env.NODE_ENV === 'development' ? error.message : undefined });
   }
 };
 
@@ -244,4 +265,84 @@ exports.simulateClinicalReasoning = async (req, res) => {
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
-}; 
+};
+
+/**
+ * 获取单个会话详情（含消息）
+ */
+exports.getSessionById = async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    if (!sessionId) return res.status(400).json({ success: false, error: '缺少sessionId' });
+    if (DISABLE_DB) {
+      return res.json({ success: true, data: { id: sessionId, userId: req.user?.uid || 'anonymous', title: 'Dev Session', messages: [] } });
+    }
+    const sessionRef = db.collection('sessions').doc(sessionId);
+    const snap = await sessionRef.get();
+    if (!snap.exists) return res.status(404).json({ success: false, error: '会话不存在' });
+    const sessionData = snap.data();
+    if (req.user && req.user.role !== 'admin' && sessionData.userId !== req.user.uid) {
+      return res.status(403).json({ success: false, error: '无权访问该会话' });
+    }
+    const messagesSnap = await sessionRef.collection('messages').orderBy('createdAt', 'asc').get();
+    const messages = messagesSnap.docs.map(d => ({ id: d.id, ...d.data(), timestamp: d.data().createdAt?.toDate()?.toISOString() }));
+    return res.json({ success: true, data: { id: snap.id, ...sessionData, messages } });
+  } catch (err) {
+    console.error('getSessionById error:', err);
+    return res.status(500).json({ success: false, error: '获取会话失败' });
+  }
+};
+
+/**
+ * 更新会话标题
+ */
+exports.updateSessionTitle = async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const { title } = req.body || {};
+    if (!title || typeof title !== 'string') return res.status(400).json({ success: false, error: '无效标题' });
+    if (DISABLE_DB) {
+      return res.json({ success: true, message: '更新成功' });
+    }
+    const sessionRef = db.collection('sessions').doc(sessionId);
+    const snap = await sessionRef.get();
+    if (!snap.exists) return res.status(404).json({ success: false, error: '会话不存在' });
+    const sessionData = snap.data();
+    if (req.user && req.user.role !== 'admin' && sessionData.userId !== req.user.uid) {
+      return res.status(403).json({ success: false, error: '无权修改' });
+    }
+    await sessionRef.update({ title, updatedAt: admin.firestore.FieldValue.serverTimestamp() });
+    return res.json({ success: true, message: '更新成功' });
+  } catch (err) {
+    console.error('updateSessionTitle error:', err);
+    return res.status(500).json({ success: false, error: '更新失败' });
+  }
+};
+
+/**
+ * 删除会话及其消息
+ */
+exports.deleteSession = async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    if (DISABLE_DB) {
+      return res.json({ success: true, message: '删除成功' });
+    }
+    const sessionRef = db.collection('sessions').doc(sessionId);
+    const snap = await sessionRef.get();
+    if (!snap.exists) return res.status(404).json({ success: false, error: '会话不存在' });
+    const sessionData = snap.data();
+    if (req.user && req.user.role !== 'admin' && sessionData.userId !== req.user.uid) {
+      return res.status(403).json({ success: false, error: '无权删除' });
+    }
+    const messagesSnap = await sessionRef.collection('messages').get();
+    const batch = db.batch();
+    messagesSnap.forEach(doc => batch.delete(doc.ref));
+    await batch.commit();
+    await sessionRef.delete();
+    return res.json({ success: true, message: '删除成功' });
+  } catch (err) {
+    console.error('deleteSession error:', err);
+    return res.status(500).json({ success: false, error: '删除失败' });
+  }
+};

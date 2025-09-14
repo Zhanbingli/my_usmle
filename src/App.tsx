@@ -1,20 +1,23 @@
-import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import React, { Suspense } from 'react';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ConfigProvider, theme } from 'antd';
+import { ConfigProvider, theme, Spin } from 'antd';
 import zhCN from 'antd/locale/zh_CN';
 
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
-import HomePage from './pages/HomePage';
-import CasesPage from './pages/CasesPage';
-import CaseDetailPage from './pages/CaseDetailPage';
-import QueryPage from './pages/QueryPage';
-import PubMedSearchPage from './pages/PubMedSearchPage';
-import ArticleDetailPage from './pages/ArticleDetailPage';
 import ErrorBoundary from './components/ErrorBoundary';
-
 import './App.css';
+const HomePage = React.lazy(() => import('./pages/HomePage'));
+const CasesPage = React.lazy(() => import('./pages/CasesPage'));
+const CaseDetailPage = React.lazy(() => import('./pages/CaseDetailPage'));
+const QueryPage = React.lazy(() => import('./pages/QueryPage'));
+const PubMedSearchPage = React.lazy(() => import('./pages/PubMedSearchPage'));
+const ArticleDetailPage = React.lazy(() => import('./pages/ArticleDetailPage'));
+const LoginPage = React.lazy(() => import('./pages/LoginPage'));
+const ProfilePage = React.lazy(() => import('./pages/ProfilePage'));
+const AnalyticsPage = React.lazy(() => import('./pages/AnalyticsPage'));
 
 // 创建 React Query 客户端
 const queryClient = new QueryClient({
@@ -34,7 +37,7 @@ const queryClient = new QueryClient({
 const antdTheme = {
   algorithm: theme.defaultAlgorithm,
   token: {
-    colorPrimary: '#2196f3',
+    colorPrimary: '#667eea',
     colorSuccess: '#52c41a',
     colorWarning: '#faad14',
     colorError: '#f5222d',
@@ -44,27 +47,181 @@ const antdTheme = {
   },
 };
 
+// 受保护的路由组件
+const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isLoggedIn, loading } = useAuth();
+  const location = useLocation();
+
+  if (loading) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh' 
+      }}>
+        <Spin size="large" />
+      </div>
+    );
+  }
+
+  if (!isLoggedIn) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  return <>{children}</>;
+};
+
+// 公开路由组件（已登录用户不能访问）
+const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isLoggedIn, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh' 
+      }}>
+        <Spin size="large" />
+      </div>
+    );
+  }
+
+  if (isLoggedIn) {
+    return <Navigate to="/" replace />;
+  }
+
+  return <>{children}</>;
+};
+
+// 应用内容组件
+const AppContent: React.FC = () => {
+  const { loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh',
+        flexDirection: 'column',
+        gap: '16px'
+      }}>
+        <Spin size="large" />
+        <div style={{ color: '#666' }}>正在加载用户信息...</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="app">
+      <Header />
+      <main className="main-content">
+        <div className="container">
+          <Suspense fallback={
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '40vh' }}>
+              <Spin size="large" />
+            </div>
+          }>
+          <Routes>
+            {/* 公开路由 */}
+            <Route 
+              path="/login" 
+              element={
+                <PublicRoute>
+                  <LoginPage />
+                </PublicRoute>
+              } 
+            />
+            
+            {/* 受保护的路由 */}
+            <Route 
+              path="/" 
+              element={
+                <ProtectedRoute>
+                  <HomePage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/profile" 
+              element={
+                <ProtectedRoute>
+                  <ProfilePage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/cases" 
+              element={
+                <ProtectedRoute>
+                  <CasesPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/cases/:id" 
+              element={
+                <ProtectedRoute>
+                  <CaseDetailPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/query" 
+              element={
+                <ProtectedRoute>
+                  <QueryPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/pubmed" 
+              element={
+                <ProtectedRoute>
+                  <PubMedSearchPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/pubmed/articles/:pmid" 
+              element={
+                <ProtectedRoute>
+                  <ArticleDetailPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/analytics" 
+              element={
+                <ProtectedRoute>
+                  <AnalyticsPage />
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* 404 重定向到首页 */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+          </Suspense>
+        </div>
+      </main>
+      <Footer />
+    </div>
+  );
+};
+
 function App() {
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <ConfigProvider locale={zhCN} theme={antdTheme}>
-          <div className="app">
-            <Header />
-            <main className="main-content">
-              <div className="container">
-                <Routes>
-                  <Route path="/" element={<HomePage />} />
-                  <Route path="/cases" element={<CasesPage />} />
-                  <Route path="/cases/:id" element={<CaseDetailPage />} />
-                  <Route path="/query" element={<QueryPage />} />
-                  <Route path="/pubmed" element={<PubMedSearchPage />} />
-                  <Route path="/pubmed/articles/:pmid" element={<ArticleDetailPage />} />
-                </Routes>
-              </div>
-            </main>
-            <Footer />
-          </div>
+          <AuthProvider>
+            <AppContent />
+          </AuthProvider>
         </ConfigProvider>
       </QueryClientProvider>
     </ErrorBoundary>

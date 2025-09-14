@@ -21,29 +21,31 @@ export interface Case {
   id: string;
   title: string;
   description: string;
-  difficulty: Difficulty;
-  specialty: Specialty;
-  symptoms: string[];
-  diagnosis: string[];
-  treatment: string[];
-  createdAt: string;
-  updatedAt: string;
+  difficulty: 'easy' | 'medium' | 'hard';
+  category: string;
+  correctDiagnosis?: string;
+  clinicalNotes?: ClinicalNote[];
+  feedbacks?: CaseFeedback;
 }
 
-export enum Difficulty {
-  BEGINNER = 'beginner',
-  INTERMEDIATE = 'intermediate',
-  ADVANCED = 'advanced'
+export interface ClinicalNote {
+  type: 'history' | 'physical' | 'lab' | 'imaging';
+  content: string;
 }
 
-export enum Specialty {
-  INTERNAL_MEDICINE = 'internal_medicine',
-  SURGERY = 'surgery',
-  PEDIATRICS = 'pediatrics',
-  CARDIOLOGY = 'cardiology',
-  NEUROLOGY = 'neurology',
-  PSYCHIATRY = 'psychiatry',
-  EMERGENCY = 'emergency'
+export interface CaseFeedback {
+  correct: string;
+  incorrect: string;
+}
+
+export interface CaseAttempt {
+  id: string;
+  caseId: string;
+  userId: string;
+  diagnosis: string;
+  isCorrect: boolean;
+  feedback: string;
+  completedAt: string;
 }
 
 // AI问诊相关类型
@@ -80,13 +82,13 @@ export enum SessionStatus {
 export interface Article {
   pmid: string;
   title: string;
-  authors: string[];
   abstract: string;
+  authors: string[];
   journal: string;
-  publishDate: string;
+  publicationDate: string;
   doi?: string;
-  keywords: string[];
   url: string;
+  keywords?: string[];
 }
 
 export interface SearchResult {

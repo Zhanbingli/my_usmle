@@ -11,21 +11,21 @@ import {
   ClockCircleOutlined
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import { useUserStore } from '../stores/useUserStore';
+import { useAuth } from '../contexts/AuthContext';
 
 const { Title, Paragraph } = Typography;
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
-  const { user, isAuthenticated } = useUserStore();
+  const { currentUser, userProfile, isLoggedIn } = useAuth();
 
   const features = [
     {
-      icon: <RobotOutlined style={{ fontSize: '48px', color: '#1890ff' }} />,
+      icon: <RobotOutlined style={{ fontSize: '48px', color: '#667eea' }} />,
       title: 'AI智能问诊',
       description: '基于Gemini AI的智能医学助手，提供专业的医学咨询和诊断建议',
       path: '/query',
-      color: '#e6f7ff'
+      color: '#f0f2ff'
     },
     {
       icon: <BookOutlined style={{ fontSize: '48px', color: '#52c41a' }} />,
@@ -111,7 +111,7 @@ const HomePage: React.FC = () => {
                 value={stat.value}
                 suffix={stat.suffix}
                 prefix={stat.icon}
-                valueStyle={{ color: '#1890ff', fontSize: '24px' }}
+                valueStyle={{ color: '#667eea', fontSize: '24px' }}
               />
             </Card>
           </Col>
@@ -154,12 +154,12 @@ const HomePage: React.FC = () => {
       </Row>
 
       {/* Welcome Message for Authenticated Users */}
-      {isAuthenticated && user && (
-        <Card style={{ borderRadius: '12px', background: '#f0f9ff', border: '1px solid #bae7ff' }}>
+      {isLoggedIn && currentUser && userProfile && (
+        <Card style={{ borderRadius: '12px', background: '#f0f2ff', border: '1px solid #d6e4ff' }}>
           <Row align="middle">
             <Col flex="auto">
-              <Title level={4} style={{ marginBottom: '8px', color: '#1890ff' }}>
-                欢迎回来，{user.name}！
+              <Title level={4} style={{ marginBottom: '8px', color: '#667eea' }}>
+                欢迎回来，{userProfile.displayName}！
               </Title>
               <Paragraph style={{ marginBottom: 0, color: '#666' }}>
                 继续您的医学学习之旅，探索AI问诊、病例训练等功能

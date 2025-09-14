@@ -10,17 +10,20 @@
   max-width: 1400px;
   margin: 0 auto;
   gap: 16px;
+  overflow: hidden; /* 防止容器溢出 */
 }
 
 /* 左侧会话列表 */
 .sessions-sidebar {
   width: 300px;
+  min-width: 300px; /* 防止压缩过小 */
   background: white;
   border-radius: 8px;
   padding: 16px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .sessions-header {
@@ -68,6 +71,8 @@
 /* 右侧对话区域 */
 .chat-area {
   flex: 1;
+  min-width: 0; /* 确保flex item可以缩小 */
+  overflow: hidden; /* 防止溢出 */
 }
 
 .chat-card {
@@ -75,6 +80,7 @@
   display: flex;
   flex-direction: column;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  overflow: hidden; /* 防止卡片溢出 */
 }
 
 .chat-card .ant-card-body {
@@ -82,6 +88,7 @@
   display: flex;
   flex-direction: column;
   padding: 24px;
+  overflow: hidden; /* 防止内容溢出 */
 }
 
 .chat-header {
@@ -100,8 +107,12 @@
 .messages-container {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden; /* 明确防止水平溢出 */
   margin: 16px 0;
   min-height: 300px;
+  /* 确保消息容器有明确的宽度限制 */
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .welcome-message {
@@ -117,12 +128,17 @@
   flex-direction: column;
   gap: 16px;
   padding: 8px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .message {
   display: flex;
   gap: 12px;
   animation: fadeInUp 0.3s ease-out;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden; /* 防止消息溢出 */
 }
 
 .message.user {
@@ -131,9 +147,12 @@
 
 .message-content {
   max-width: 70%;
+  min-width: 0; /* 允许内容收缩 */
   display: flex;
   flex-direction: column;
   gap: 4px;
+  box-sizing: border-box;
+  overflow: hidden; /* 防止内容溢出 */
 }
 
 .message.user .message-content {
@@ -145,8 +164,21 @@
   border-radius: 16px;
   background: white;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  /* 强化文本换行和溢出控制 */
   word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
   line-height: 1.5;
+  /* 确保内容不会超出容器 */
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+  /* 处理长单词和URL */
+  white-space: pre-wrap;
+  /* 强制处理溢出 */
+  overflow: hidden;
+  overflow-wrap: anywhere; /* 更激进的换行策略 */
 }
 
 .message.user .message-bubble {
@@ -159,9 +191,64 @@
   border: 1px solid #b7eb8f;
 }
 
+/* 处理代码块和预格式化文本 */
+.message-bubble pre {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  overflow-x: auto;
+  max-width: 100%;
+  margin: 8px 0;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 4px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.message-bubble code {
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+/* 处理链接和长URL */
+.message-bubble a {
+  word-break: break-all;
+  overflow-wrap: break-word;
+  max-width: 100%;
+  display: inline-block;
+}
+
+/* 处理所有可能的长内容 */
+.message-bubble * {
+  max-width: 100%;
+  box-sizing: border-box;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* 处理表格 */
+.message-bubble table {
+  width: 100%;
+  max-width: 100%;
+  table-layout: fixed;
+  word-wrap: break-word;
+}
+
+.message-bubble td, .message-bubble th {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  max-width: 0;
+}
+
 .input-area {
   border-top: 1px solid #f0f0f0;
   padding-top: 16px;
+  flex-shrink: 0; /* 防止输入区域被压缩 */
 }
 
 .input-area .ant-input {
@@ -195,10 +282,20 @@
   
   .sessions-sidebar {
     width: 100%;
+    min-width: unset;
     height: 200px;
   }
   
   .message-content {
     max-width: 85%;
+  }
+
+  .message-bubble {
+    font-size: 14px;
+    padding: 10px 12px;
+  }
+
+  .chat-card .ant-card-body {
+    padding: 16px;
   }
 } 

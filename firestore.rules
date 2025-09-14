@@ -1,0 +1,70 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 用户档案规则
+    match /users/{userId} {
+      // 用户只能读写自己的档案，管理员可以读取所有用户
+      allow read, write: if request.auth != null && (
+        request.auth.uid == userId || 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
+      );
+    }
+    
+    // 病例尝试记录规则
+    match /caseAttempts/{attemptId} {
+      // 用户只能读取自己的尝试记录，管理员可以读取所有记录
+      allow read: if request.auth != null && (
+        resource.data.userId == request.auth.uid ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
+      );
+      // 只有认证用户可以创建记录，且userId必须匹配
+      allow create: if request.auth != null && 
+        request.resource.data.userId == request.auth.uid;
+      // 用户不能修改或删除尝试记录（保证数据完整性）
+      allow update, delete: if false;
+    }
+    
+    // 用户统计数据规则
+    match /userStats/{userId} {
+      // 用户只能读取自己的统计，管理员可以读取所有统计
+      allow read: if request.auth != null && (
+        userId == request.auth.uid ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
+      );
+      // 系统可以创建和更新统计数据
+      allow create, update: if request.auth != null && userId == request.auth.uid;
+      // 不允许删除统计数据
+      allow delete: if false;
+    }
+    
+    // AI会话记录规则
+    match /sessions/{sessionId} {
+      // 用户只能读取自己的会话，管理员可以读取所有会话
+      allow read: if request.auth != null && (
+        resource.data.userId == request.auth.uid ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
+      );
+      // 只有认证用户可以创建会话，且userId必须匹配
+      allow create: if request.auth != null && 
+        request.resource.data.userId == request.auth.uid;
+      // 用户可以更新自己的会话
+      allow update: if request.auth != null && 
+        resource.data.userId == request.auth.uid;
+      // 用户可以删除自己的会话
+      allow delete: if request.auth != null && 
+        resource.data.userId == request.auth.uid;
+    }
+    
+    // 系统配置和公开数据（如病例列表）- 只读
+    match /config/{document} {
+      allow read: if true;
+      allow write: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    // 默认拒绝所有其他访问
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+} 

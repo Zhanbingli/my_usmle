@@ -1,13 +1,17 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
+import { getAuth } from 'firebase/auth';
 import { ApiResponse } from '../types';
 
 class ApiClient {
   private instance: AxiosInstance;
 
-  constructor(baseURL: string = '/api') {
+  constructor(baseURL?: string) {
+    // 优先使用环境变量，其次使用相对路径（通过代理/重写）
+    const defaultBaseURL = process.env.REACT_APP_API_BASE_URL || '/api';
+
     this.instance = axios.create({
-      baseURL,
-      timeout: 10000,
+      baseURL: baseURL || defaultBaseURL,
+      timeout: 30000,  // 增加超时时间到30秒
       headers: {
         'Content-Type': 'application/json',
       },
@@ -19,12 +23,19 @@ class ApiClient {
   private setupInterceptors(): void {
     // 请求拦截器
     this.instance.interceptors.request.use(
-      (config) => {
-        // 可以在这里添加认证token
-        const token = localStorage.getItem('auth-token');
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
+      async (config) => {
+        // 自动添加Firebase认证token
+        try {
+          const auth = getAuth();
+          const user = auth.currentUser;
+          if (user) {
+            const token = await user.getIdToken();
+            config.headers.Authorization = `Bearer ${token}`;
+          }
+        } catch (error) {
+          console.error('Error getting auth token:', error);
         }
+        
         return config;
       },
       (error) => {
@@ -37,13 +48,42 @@ class ApiClient {
       (response: AxiosResponse<ApiResponse>) => {
         return response;
       },
-      (error) => {
+      async (error) => {
+        const originalRequest = error.config;
+        
+        // 如果是401错误且未重试过，尝试刷新token
+        if (error.response?.status === 401 && !originalRequest._retry) {
+          originalRequest._retry = true;
+          
+          try {
+            const auth = getAuth();
+            const user = auth.currentUser;
+            if (user) {
+              const newToken = await user.getIdToken(true); // 强制刷新token
+              originalRequest.headers.Authorization = `Bearer ${newToken}`;
+              return this.instance(originalRequest);
+            }
+          } catch (refreshError) {
+            console.error('Token refresh failed:', refreshError);
+            // 跳转到登录页面
+            window.location.href = '/login';
+            return Promise.reject(refreshError);
+          }
+        }
+        
         // 全局错误处理
-        if (error.response?.status === 401) {
-          // 未授权，清除本地存储并跳转到登录页
-          localStorage.removeItem('auth-token');
+        console.error('API Error:', {
+          message: error.message,
+          url: error.config?.url,
+          status: error.response?.status,
+          data: error.response?.data
+        });
+        
+        if (error.response?.status === 401 && originalRequest._retry) {
+          // 认证失败，跳转到登录页
           window.location.href = '/login';
         }
+        
         return Promise.reject(error);
       }
     );

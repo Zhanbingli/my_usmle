@@ -15,11 +15,23 @@ export interface SendMessageResponse {
 export const geminiApi = {
   // 发送消息给AI
   async sendMessage(data: SendMessageRequest): Promise<SendMessageResponse> {
-    const response = await apiClient.post<SendMessageResponse>('/gemini/query', data);
+    // 将message参数转换为后端期望的query参数
+    const requestData = {
+      query: data.message,
+      context: data.context || '',
+      sessionId: data.sessionId
+    };
+    
+    const response = await apiClient.post('/gemini/query', requestData);
     if (!response.success) {
       throw new Error(response.error || 'Failed to send message');
     }
-    return response.data!;
+    
+    // 转换后端返回的数据格式为前端期望的格式
+    return {
+      response: response.data!.answer,
+      sessionId: data.sessionId || 'new'
+    };
   },
 
   // 获取查询会话历史

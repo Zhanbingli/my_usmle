@@ -1,3 +1,7 @@
+const admin = require('firebase-admin');
+const db = admin.firestore();
+const DISABLE_DB = String(process.env.DISABLE_DB || '').toLowerCase() === 'true';
+
 // 模拟数据库，实际项目中可以使用MongoDB或其他数据库
 let cases = [
   {
@@ -150,6 +154,61 @@ exports.submitDiagnosis = async (req, res) => {
     // 简单的字符串匹配，实际项目中可以使用更复杂的匹配逻辑或AI评估
     const isCorrect = diagnosis.toLowerCase().includes(caseData.correctDiagnosis.toLowerCase());
     
+    // 保存用户的尝试记录到Firestore
+    if (req.user && !DISABLE_DB) {
+      try {
+        const attemptData = {
+          userId: req.user.uid,
+          caseId: id,
+          diagnosis: diagnosis,
+          isCorrect: isCorrect,
+          correctDiagnosis: caseData.correctDiagnosis,
+          feedback: isCorrect ? caseData.feedbacks.correct : caseData.feedbacks.incorrect,
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          userEmail: req.user.email,
+          caseTitle: caseData.title,
+          caseCategory: caseData.category,
+          caseDifficulty: caseData.difficulty
+        };
+        
+        await db.collection('caseAttempts').add(attemptData);
+        
+        // 更新用户统计信息
+        const userStatsRef = db.collection('userStats').doc(req.user.uid);
+        const userStatsDoc = await userStatsRef.get();
+        
+        if (!userStatsDoc.exists) {
+          // 创建新的用户统计
+          await userStatsRef.set({
+            userId: req.user.uid,
+            totalAttempts: 1,
+            correctAttempts: isCorrect ? 1 : 0,
+            totalCases: 1,
+            categoriesAttempted: [caseData.category],
+            lastAttemptAt: admin.firestore.FieldValue.serverTimestamp(),
+            createdAt: admin.firestore.FieldValue.serverTimestamp()
+          });
+        } else {
+          // 更新现有统计
+          const currentStats = userStatsDoc.data();
+          const categoriesAttempted = new Set(currentStats.categoriesAttempted || []);
+          categoriesAttempted.add(caseData.category);
+          
+          await userStatsRef.update({
+            totalAttempts: admin.firestore.FieldValue.increment(1),
+            correctAttempts: admin.firestore.FieldValue.increment(isCorrect ? 1 : 0),
+            categoriesAttempted: Array.from(categoriesAttempted),
+            lastAttemptAt: admin.firestore.FieldValue.serverTimestamp()
+          });
+        }
+        
+        console.log(`Saved case attempt for user ${req.user.uid}: ${diagnosis} -> ${isCorrect ? 'Correct' : 'Incorrect'}`);
+      } catch (firestoreError) {
+        console.error('Error saving to Firestore:', firestoreError);
+        // 不影响主要的诊断功能，只记录错误
+      }
+    }
+    
     return res.status(200).json({
       success: true,
       data: {
@@ -165,6 +224,79 @@ exports.submitDiagnosis = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: '提交诊断时出错',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
+/**
+ * 获取用户的病例尝试记录
+ */
+exports.getUserAttempts = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    // 检查权限：用户只能查看自己的记录，管理员可以查看所有记录
+    if (req.user.uid !== userId && req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: '权限不足'
+      });
+    }
+    
+    if (DISABLE_DB) {
+      return res.status(200).json({ success: true, data: [] });
+    }
+    const attemptsSnapshot = await db.collection('caseAttempts')
+      .where('userId', '==', userId)
+      .orderBy('createdAt', 'desc')
+      .get();
+    const attempts = attemptsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), createdAt: doc.data().createdAt?.toDate()?.toISOString() }));
+    return res.status(200).json({ success: true, data: attempts });
+    
+  } catch (error) {
+    console.error('Error getting user attempts:', error);
+    
+    return res.status(500).json({
+      success: false,
+      message: '获取用户尝试记录时出错',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
+/**
+ * 获取用户统计信息
+ */
+exports.getUserStats = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    // 检查权限
+    if (req.user.uid !== userId && req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: '权限不足'
+      });
+    }
+    
+    if (DISABLE_DB) {
+      return res.status(200).json({ success: true, data: { totalAttempts: 0, correctAttempts: 0, accuracy: 0, totalCases: 0, categoriesAttempted: [] } });
+    }
+    const userStatsDoc = await db.collection('userStats').doc(userId).get();
+    if (!userStatsDoc.exists) {
+      return res.status(200).json({ success: true, data: { totalAttempts: 0, correctAttempts: 0, accuracy: 0, totalCases: 0, categoriesAttempted: [] } });
+    }
+    const stats = userStatsDoc.data();
+    const accuracy = stats.totalAttempts > 0 ? (stats.correctAttempts / stats.totalAttempts * 100).toFixed(1) : 0;
+    return res.status(200).json({ success: true, data: { ...stats, accuracy: parseFloat(accuracy), lastAttemptAt: stats.lastAttemptAt?.toDate()?.toISOString(), createdAt: stats.createdAt?.toDate()?.toISOString() } });
+    
+  } catch (error) {
+    console.error('Error getting user stats:', error);
+    
+    return res.status(500).json({
+      success: false,
+      message: '获取用户统计信息时出错',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
