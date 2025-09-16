@@ -4,6 +4,8 @@ export interface AgentActRequest {
   goal: string;
   context?: string;
   mode?: 'auto' | 'literature' | 'case';
+  provider?: AgentProvider;
+  model?: string;
 }
 
 export interface AgentActResponse {
@@ -20,3 +22,5 @@ export const agentApi = {
     return resp.data as AgentActResponse;
   },
 };
+
+export type AgentProvider = 'gemini' | 'openai' | 'claude';

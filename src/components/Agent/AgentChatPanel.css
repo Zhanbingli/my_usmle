@@ -1,12 +1,10 @@
-.query-page {
+.agent-chat-panel {
   padding: 24px;
-  min-height: calc(100vh - 160px);
   background: #f5f5f5;
 }
 
-.query-container {
+.agent-chat-container {
   display: flex;
-  height: calc(100vh - 200px);
   max-width: 1400px;
   margin: 0 auto;
   gap: 16px;
@@ -14,7 +12,7 @@
 }
 
 /* 左侧会话列表 */
-.sessions-sidebar {
+.agent-chat-sidebar {
   width: 300px;
   min-width: 300px; /* 防止压缩过小 */
   background: white;
@@ -69,7 +67,7 @@
 }
 
 /* 右侧对话区域 */
-.chat-area {
+.agent-chat-main {
   flex: 1;
   min-width: 0; /* 确保flex item可以缩小 */
   overflow: hidden; /* 防止溢出 */
@@ -275,12 +273,12 @@
 
 /* 响应式设计 */
 @media (max-width: 768px) {
-  .query-container {
+  .agent-chat-container {
     flex-direction: column;
     height: auto;
   }
-  
-  .sessions-sidebar {
+
+  .agent-chat-sidebar {
     width: 100%;
     min-width: unset;
     height: 200px;
