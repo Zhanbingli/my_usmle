@@ -53,22 +53,22 @@ const PubMedSearchPage: React.FC = () => {
 
   const { data: articles, isLoading, error } = usePubMedSearch(searchParams);
 
-  console.log('PubMed Search Debug:', {
-    searchQuery,
-    filters,
-    searchParams,
-    isLoading,
-    error: error?.message,
-    articles: articles?.length
-  });
+  if (process.env.NODE_ENV === 'development') {
+    console.debug('PubMed Search Debug:', {
+      searchQuery,
+      filters,
+      searchParams,
+      isLoading,
+      error: error?.message,
+      articles: articles?.length
+    });
+  }
 
   const handleSearch = (value: string) => {
-    console.log('搜索触发:', value);
     setSearchQuery(value);
   };
 
   const handleFilterChange = (key: keyof SearchFilters, value: any) => {
-    console.log('筛选器变更:', key, value);
     setFilters(prev => ({
       ...prev,
       [key]: value

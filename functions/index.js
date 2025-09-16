@@ -250,6 +250,9 @@ caseRouter.get('/', caseController.getAllCases);
 caseRouter.get('/:id', caseController.getCaseById);
 caseRouter.post('/:id/diagnose', caseController.submitDiagnosis);
 
+const agentRouter = express.Router();
+agentRouter.post('/act', authenticateUser, rateLimiter(30, 60 * 1000), agentController.act);
+
 // 应用路由
 app.use('/api/user', userRouter);
 app.use('/api/gemini', geminiRouter);
@@ -291,6 +294,4 @@ exports.api = onRequest(
     secrets: [geminiApiKey]
   },
   app
-const agentRouter = express.Router();
-agentRouter.post('/act', rateLimiter(30, 60 * 1000), agentController.act);
-); 
+);

@@ -25,10 +25,26 @@ try {
   console.warn('Firebase Admin init warning:', e.message);
 }
 
-// CORS（本地默认允许 3000）
-const allowedOrigins = ['http://localhost:3000', 'http://127.0.0.1:3000'];
+// CORS（本地允许常见内网地址 + 可通过环境变量追加）
+const baseOrigins = ['http://localhost:3000', 'http://127.0.0.1:3000'];
+const extraOrigins = (process.env.CORS_ORIGIN || '')
+  .split(',')
+  .map(s => s.trim())
+  .filter(Boolean);
+const origins = [...baseOrigins, ...extraOrigins];
+// 匹配内网常见网段: 10.x.x.x, 192.168.x.x, 172.16-31.x.x 任意端口（默认前端 3000）
+const localLanRegex = /^http:\/\/(localhost|127\.0\.0\.1|10\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}|192\.168\.[0-9]{1,3}\.[0-9]{1,3}|172\.(1[6-9]|2\d|3[0-1])\.[0-9]{1,3}\.[0-9]{1,3}):[0-9]{2,5}$/;
+
 app.use(cors({
-  origin: (origin, cb) => { if (!origin || allowedOrigins.includes(origin)) return cb(null, true); return cb(new Error('Not allowed by CORS')); },
+  origin: (origin, cb) => {
+    // 允许无 Origin 的请求（如 curl、移动端、同机调用）
+    if (!origin) return cb(null, true);
+    if (origins.includes(origin)) return cb(null, true);
+    if (localLanRegex.test(origin)) return cb(null, true);
+    // 开发环境更宽松
+    if (process.env.NODE_ENV !== 'production') return cb(null, true);
+    return cb(new Error('Not allowed by CORS'));
+  },
   credentials: true
 }));
 app.use(express.json());
@@ -147,7 +163,7 @@ caseRouter.get('/:id', caseController.getCaseById);
 caseRouter.post('/:id/diagnose', caseController.submitDiagnosis);
 
 const agentRouter = express.Router();
-agentRouter.post('/act', rateLimiter(30, 60 * 1000), agentController.act);
+agentRouter.post('/act', authenticateUser, rateLimiter(30, 60 * 1000), agentController.act);
 
 app.use('/api/gemini', geminiRouter);
 app.use('/api/pubmed', pubmedRouter);

@@ -22,8 +22,6 @@ export const pubmedApi = {
     if (params.endDate) searchParams.append('endDate', params.endDate);
     if (params.sortBy) searchParams.append('sortBy', params.sortBy);
 
-    console.log('Frontend API call:', `/pubmed/search?${searchParams}`);
-
     const response = await apiClient.get<Article[]>(`/pubmed/search?${searchParams}`);
     if (!response.success) {
       throw new Error(response.error || 'Failed to search articles');
