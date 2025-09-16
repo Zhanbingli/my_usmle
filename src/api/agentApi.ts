@@ -1,18 +1,12 @@
 import { apiClient } from '../utils/api';
+import { AgentActResponse, AgentMode, AgentProvider } from '../features/agent/types';
 
 export interface AgentActRequest {
   goal: string;
   context?: string;
-  mode?: 'auto' | 'literature' | 'case';
+  mode?: AgentMode;
   provider?: AgentProvider;
   model?: string;
-}
-
-export interface AgentActResponse {
-  answer: string;
-  steps: number;
-  actions: Array<{ step: number; tool: string; args: any; status: number; ok: boolean }>;
-  citations?: Array<{ pmid: string; title: string; url: string }>;
 }
 
 export const agentApi = {
@@ -23,4 +17,4 @@ export const agentApi = {
   },
 };
 
-export type AgentProvider = 'gemini' | 'openai' | 'claude';
+export type { AgentProvider, AgentMode, AgentActResponse };

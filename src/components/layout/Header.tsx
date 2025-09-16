@@ -30,14 +30,9 @@ const Header: React.FC = () => {
       label: '首页',
     },
     {
-      key: '/query',
-      icon: <RobotOutlined />,
-      label: 'AI问诊',
-    },
-    {
       key: '/agent',
       icon: <RobotOutlined />,
-      label: 'Agent',
+      label: '智能Agent',
     },
     {
       key: '/cases',

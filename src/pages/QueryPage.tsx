@@ -1,8 +1,8 @@
 import React from 'react';
-import AgentPage from './AgentPage';
+import { Navigate } from 'react-router-dom';
 
 const QueryPage: React.FC = () => {
-  return <AgentPage initialTab="consult" />;
+  return <Navigate to="/agent" replace />;
 };
 
 export default QueryPage;
