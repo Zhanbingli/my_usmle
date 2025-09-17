@@ -47,4 +47,5 @@ export interface AgentRun {
   provider: AgentProvider;
   model?: string;
   mode: AgentMode;
+  context?: string;
 }

@@ -120,8 +120,8 @@ const AppContent: React.FC = () => {
   return (
     <div className="app">
       <Header />
-      <main className="main-content">
-        <div className="container">
+      <main className="app__main">
+        <div className="app__content">
           <Suspense fallback={
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '40vh' }}>
               <Spin size="large" />

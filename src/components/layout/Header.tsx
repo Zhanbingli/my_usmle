@@ -14,6 +14,7 @@ import {
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import './Header.css';
 
 const { Header: AntHeader } = Layout;
 const { Text } = Typography;
@@ -112,76 +113,51 @@ const Header: React.FC = () => {
   };
 
   return (
-    <AntHeader style={{ 
-      background: 'white', 
-      boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-      padding: '0 24px',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      position: 'sticky',
-      top: 0,
-      zIndex: 1000
-    }}>
-      {/* Logo and Brand */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-        <div style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: '8px',
-          cursor: 'pointer'
-        }} onClick={() => navigate('/')}>
-          <MedicineBoxOutlined style={{ fontSize: '24px', color: '#667eea' }} />
-          <Text strong style={{ fontSize: '18px', color: '#667eea' }}>
-            医学AI平台
-          </Text>
+    <AntHeader className="app-header glass-surface">
+      <div className="app-header__inner">
+        <div className="app-header__brand" onClick={() => navigate('/')}>
+          <MedicineBoxOutlined className="app-header__brand-icon" />
+          <Text className="app-header__brand-name">医学AI平台</Text>
         </div>
-      </div>
 
-      {/* Navigation Menu */}
-      <Menu
-        mode="horizontal"
-        selectedKeys={[location.pathname]}
-        items={menuItems}
-        onClick={handleMenuClick}
-        style={{ 
-          border: 'none',
-          background: 'transparent',
-          flex: 1,
-          justifyContent: 'center'
-        }}
-      />
+        <Menu
+          mode="horizontal"
+          selectedKeys={[location.pathname]}
+          items={menuItems}
+          onClick={handleMenuClick}
+          className="app-header__menu"
+        />
 
-      {/* User Actions */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-        {isLoggedIn && currentUser && userProfile ? (
-          <Dropdown
-            menu={{ 
-              items: userMenuItems,
-              onClick: handleUserMenuClick
-            }}
-            placement="bottomRight"
-            trigger={['click']}
-          >
-            <Space style={{ cursor: 'pointer' }}>
-              <Avatar 
-                icon={<UserOutlined />} 
-                src={currentUser.photoURL}
-                style={{ backgroundColor: '#667eea' }}
-              />
-              <Text>{userProfile.displayName}</Text>
+        <div className="app-header__actions">
+          {isLoggedIn && currentUser && userProfile ? (
+            <Dropdown
+              menu={{ 
+                items: userMenuItems,
+                onClick: handleUserMenuClick
+              }}
+              placement="bottomRight"
+              trigger={['click']}
+            >
+              <Space className="app-header__user">
+                <Avatar 
+                  icon={<UserOutlined />} 
+                  src={currentUser.photoURL}
+                  style={{ backgroundColor: 'var(--app-color-primary)' }}
+                />
+                <Text>{userProfile.displayName}</Text>
+              </Space>
+            </Dropdown>
+          ) : (
+            <Space size={12}>
+              <Button type="default" onClick={handleLogin}>
+                登录
+              </Button>
+              <Button type="primary" onClick={handleRegister}>
+                注册
+              </Button>
             </Space>
-          </Dropdown>
-        ) : (
-          <Space>
-            <Button type="default" onClick={handleLogin}>
-              登录
-            </Button>
-            <Button type="primary" onClick={handleRegister}>
-              注册
-            </Button>
-          </Space>
-        )}
+          )}
+        </div>
       </div>
     </AntHeader>
   );

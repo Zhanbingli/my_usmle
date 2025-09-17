@@ -1,168 +1,156 @@
 import React from 'react';
-import { Card, Row, Col, Typography, Button, Space, Statistic } from 'antd';
-import { 
-  RobotOutlined, 
-  BookOutlined, 
-  SearchOutlined, 
+import { Card, Row, Col, Typography, Button, Space, Statistic, Tag } from 'antd';
+import {
+  RobotOutlined,
+  BookOutlined,
+  SearchOutlined,
   TrophyOutlined,
   ArrowRightOutlined,
   MedicineBoxOutlined,
   UserOutlined,
-  ClockCircleOutlined
+  ClockCircleOutlined,
+  ThunderboltOutlined,
+  SafetyCertificateOutlined,
+  DeploymentUnitOutlined
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import PageContainer from '../components/layout/PageContainer';
+import './HomePage.css';
 
-const { Title, Paragraph } = Typography;
+const { Title, Paragraph, Text } = Typography;
+
+const features = [
+  {
+    icon: <RobotOutlined />,
+    title: 'AI 智能问诊',
+    description: '多模型协同推理，提供循证医学建议与问诊摘要。',
+    path: '/query',
+    accent: 'primary'
+  },
+  {
+    icon: <BookOutlined />,
+    title: '病例训练营',
+    description: '按器官系统分层的病例演练，并附详尽解析与高频考点。',
+    path: '/cases',
+    accent: 'success'
+  },
+  {
+    icon: <SearchOutlined />,
+    title: 'PubMed 检索',
+    description: '智能检索最新文献，自动总结研究结论与指南共识。',
+    path: '/pubmed',
+    accent: 'warning'
+  },
+  {
+    icon: <TrophyOutlined />,
+    title: 'USMLE 备考',
+    description: 'Step1/2/3 模拟题库与考点概览，支持个性化错题复盘。',
+    path: '/exam',
+    accent: 'danger'
+  }
+];
+
+const stats = [
+  { title: '注册学员', value: 1234, suffix: '人', icon: <UserOutlined /> },
+  { title: '病例库', value: 567, suffix: '个', icon: <MedicineBoxOutlined /> },
+  { title: '智能会话', value: 8901, suffix: '次', icon: <RobotOutlined /> },
+  { title: '学习时长', value: 2345, suffix: '小时', icon: <ClockCircleOutlined /> }
+];
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const { currentUser, userProfile, isLoggedIn } = useAuth();
 
-  const features = [
-    {
-      icon: <RobotOutlined style={{ fontSize: '48px', color: '#667eea' }} />,
-      title: 'AI智能问诊',
-      description: '基于Gemini AI的智能医学助手，提供专业的医学咨询和诊断建议',
-      path: '/query',
-      color: '#f0f2ff'
-    },
-    {
-      icon: <BookOutlined style={{ fontSize: '48px', color: '#52c41a' }} />,
-      title: '病例训练',
-      description: '丰富的临床病例库，分级训练提升诊断思维和临床技能',
-      path: '/cases',
-      color: '#f6ffed'
-    },
-    {
-      icon: <SearchOutlined style={{ fontSize: '48px', color: '#faad14' }} />,
-      title: 'PubMed检索',
-      description: '集成PubMed数据库，快速检索最新医学文献和研究成果',
-      path: '/pubmed',
-      color: '#fffbe6'
-    },
-    {
-      icon: <TrophyOutlined style={{ fontSize: '48px', color: '#f5222d' }} />,
-      title: 'USMLE考试',
-      description: '专业的USMLE考试模拟和训练，助力医学生通过考试',
-      path: '/exam',
-      color: '#fff1f0'
-    }
-  ];
-
-  const stats = [
-    { title: '注册用户', value: 1234, suffix: '人', icon: <UserOutlined /> },
-    { title: '病例数量', value: 567, suffix: '个', icon: <MedicineBoxOutlined /> },
-    { title: '问诊次数', value: 8901, suffix: '次', icon: <RobotOutlined /> },
-    { title: '在线时长', value: 2345, suffix: '小时', icon: <ClockCircleOutlined /> }
-  ];
-
   return (
-    <div style={{ padding: '24px', background: '#f5f5f5', minHeight: 'calc(100vh - 160px)' }}>
-      {/* Hero Section */}
-      <div style={{ 
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        borderRadius: '16px',
-        padding: '60px 40px',
-        textAlign: 'center',
-        color: 'white',
-        marginBottom: '40px'
-      }}>
-        <Title level={1} style={{ color: 'white', fontSize: '48px', marginBottom: '16px' }}>
-          智能医学AI平台
-        </Title>
-        <Paragraph style={{ 
-          color: 'rgba(255,255,255,0.9)', 
-          fontSize: '20px', 
-          maxWidth: '600px', 
-          margin: '0 auto 32px' 
-        }}>
-          基于人工智能的医学教育和临床辅助平台，为医学生和医生提供智能问诊、病例训练、文献检索等服务
-        </Paragraph>
-        <Space size="large">
-          <Button 
-            type="primary" 
-            size="large" 
-            icon={<RobotOutlined />}
-            onClick={() => navigate('/query')}
-            style={{ height: '48px', fontSize: '16px' }}
-          >
-            开始AI问诊
-          </Button>
-          <Button 
-            size="large" 
-            ghost
-            icon={<BookOutlined />}
-            onClick={() => navigate('/cases')}
-            style={{ height: '48px', fontSize: '16px' }}
-          >
-            浏览病例
-          </Button>
-        </Space>
-      </div>
+    <div className="home-page">
+      <PageContainer variant="gradient" padded className="home-hero">
+        <div className="home-hero__content">
+          <Tag color="gold" bordered={false} icon={<SafetyCertificateOutlined />}>
+            面向医学学习与临床决策的 AI 联合实验
+          </Tag>
+          <Title level={1}>
+            智能医学 AI 平台
+          </Title>
+          <Paragraph>
+            将问诊对话、病例演练与循证文献检索整合在一个平台中，帮助临床医师与医学生快速验证诊断思路、制定治疗方案和准备 USMLE 考试。
+          </Paragraph>
+          <Space size={16} wrap>
+            <Button type="primary" size="large" icon={<RobotOutlined />} onClick={() => navigate('/query')}>
+              立即体验问诊 Agent
+            </Button>
+            <Button size="large" icon={<BookOutlined />} onClick={() => navigate('/cases')}>
+              浏览病例训练
+            </Button>
+          </Space>
+          <div className="home-hero__badges">
+            <Tag icon={<ThunderboltOutlined />} color="purple">
+              多模型推理
+            </Tag>
+            <Tag icon={<DeploymentUnitOutlined />} color="processing">
+              工具链可视化
+            </Tag>
+            <Tag icon={<SearchOutlined />} color="geekblue">
+              PubMed 实时检索
+            </Tag>
+          </div>
+        </div>
+      </PageContainer>
 
-      {/* Stats Section */}
-      <Row gutter={[24, 24]} style={{ marginBottom: '40px' }}>
-        {stats.map((stat, index) => (
-          <Col xs={12} sm={6} key={index}>
-            <Card style={{ textAlign: 'center', borderRadius: '12px' }}>
-              <Statistic
-                title={stat.title}
-                value={stat.value}
-                suffix={stat.suffix}
-                prefix={stat.icon}
-                valueStyle={{ color: '#667eea', fontSize: '24px' }}
-              />
-            </Card>
-          </Col>
-        ))}
-      </Row>
+      <PageContainer variant="glass" padded>
+        <Row gutter={[24, 24]} className="home-stats">
+          {stats.map((stat, index) => (
+            <Col xs={12} md={6} key={index}>
+              <Card className="home-stats__card" bordered={false}>
+                <Statistic
+                  title={stat.title}
+                  value={stat.value}
+                  suffix={stat.suffix}
+                  prefix={stat.icon}
+                />
+              </Card>
+            </Col>
+          ))}
+        </Row>
+      </PageContainer>
 
-      {/* Features Section */}
-      <Title level={2} style={{ textAlign: 'center', marginBottom: '40px' }}>
-        核心功能
-      </Title>
-      <Row gutter={[24, 24]} style={{ marginBottom: '40px' }}>
-        {features.map((feature, index) => (
-          <Col xs={24} sm={12} lg={6} key={index}>
-            <Card
-              hoverable
-              style={{ 
-                height: '100%',
-                borderRadius: '12px',
-                background: feature.color,
-                border: 'none'
-              }}
-              bodyStyle={{ padding: '32px 24px', textAlign: 'center' }}
-              onClick={() => navigate(feature.path)}
-            >
-              <div style={{ marginBottom: '16px' }}>
-                {feature.icon}
-              </div>
-              <Title level={4} style={{ marginBottom: '12px' }}>
-                {feature.title}
-              </Title>
-              <Paragraph style={{ color: '#666', marginBottom: '20px' }}>
-                {feature.description}
-              </Paragraph>
-              <Button type="link" icon={<ArrowRightOutlined />}>
-                了解更多
-              </Button>
-            </Card>
-          </Col>
-        ))}
-      </Row>
+      <PageContainer variant="surface" padded>
+        <div className="home-section-header">
+          <div>
+            <Title level={2}>核心功能矩阵</Title>
+            <Text type="secondary">覆盖问诊、病例、检索与考试的完整学习闭环</Text>
+          </div>
+        </div>
+        <Row gutter={[24, 24]}>
+          {features.map((feature, index) => (
+            <Col xs={24} sm={12} lg={6} key={index}>
+              <Card
+                hoverable
+                bordered={false}
+                className={`home-feature home-feature--${feature.accent}`}
+                onClick={() => navigate(feature.path)}
+              >
+                <div className="home-feature__icon">{feature.icon}</div>
+                <Title level={4}>{feature.title}</Title>
+                <Paragraph type="secondary">{feature.description}</Paragraph>
+                <Button type="link" icon={<ArrowRightOutlined />}>
+                  了解更多
+                </Button>
+              </Card>
+            </Col>
+          ))}
+        </Row>
+      </PageContainer>
 
-      {/* Welcome Message for Authenticated Users */}
       {isLoggedIn && currentUser && userProfile && (
-        <Card style={{ borderRadius: '12px', background: '#f0f2ff', border: '1px solid #d6e4ff' }}>
-          <Row align="middle">
+        <PageContainer variant="glass" padded className="home-welcome">
+          <Row align="middle" gutter={[16, 16]}>
             <Col flex="auto">
-              <Title level={4} style={{ marginBottom: '8px', color: '#667eea' }}>
+              <Title level={4} style={{ marginBottom: 8 }}>
                 欢迎回来，{userProfile.displayName}！
               </Title>
-              <Paragraph style={{ marginBottom: 0, color: '#666' }}>
-                继续您的医学学习之旅，探索AI问诊、病例训练等功能
+              <Paragraph type="secondary" style={{ marginBottom: 0 }}>
+                继续你的个性化学习路径，智能 Agent 会记住你的进度与偏好。
               </Paragraph>
             </Col>
             <Col>
@@ -176,10 +164,10 @@ const HomePage: React.FC = () => {
               </Space>
             </Col>
           </Row>
-        </Card>
+        </PageContainer>
       )}
     </div>
   );
 };
 
-export default HomePage; 
+export default HomePage;

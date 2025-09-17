@@ -7,6 +7,8 @@ import { useAuth } from '../../../contexts/AuthContext';
 interface UseAgentWorkspaceResult {
   question: string;
   setQuestion: (value: string) => void;
+  context: string;
+  setContext: (value: string) => void;
   mode: AgentMode;
   setMode: (value: AgentMode) => void;
   provider: AgentProvider;
@@ -16,6 +18,9 @@ interface UseAgentWorkspaceResult {
   runs: AgentRun[];
   activeRun: AgentRun | null;
   selectRun: (id: string) => void;
+  reuseRun: (id: string) => void;
+  removeRun: (id: string) => void;
+  clearRuns: () => void;
   submit: () => Promise<void>;
   loading: boolean;
   error: string | null;
@@ -29,8 +34,9 @@ interface UseAgentWorkspaceResult {
 export const useAgentWorkspace = (): UseAgentWorkspaceResult => {
   const { isLoggedIn } = useAuth();
   const [question, setQuestion] = useState('');
+  const [context, setContext] = useState('');
   const [mode, setMode] = useState<AgentMode>('auto');
-  const [provider, setProvider] = useState<AgentProvider>('gemini');
+  const [provider, setProviderState] = useState<AgentProvider>('gemini');
   const [model, setModel] = useState<string | undefined>(PROVIDER_CONFIG.gemini.models[0]?.value);
   const [runs, setRuns] = useState<AgentRun[]>([]);
   const [activeRunId, setActiveRunId] = useState<string | null>(null);
@@ -64,7 +70,7 @@ export const useAgentWorkspace = (): UseAgentWorkspaceResult => {
     setError(null);
 
     try {
-      const response = await agentApi.act({ goal: question, mode, provider, model });
+      const response = await agentApi.act({ goal: question, context: context || undefined, mode, provider, model });
       const responseMeta = response.meta;
       const resolvedProvider = (responseMeta?.provider as AgentProvider | null) || provider;
       const resolvedModel = responseMeta?.model ?? model;
@@ -77,6 +83,7 @@ export const useAgentWorkspace = (): UseAgentWorkspaceResult => {
         provider: resolvedProvider,
         model: resolvedModel,
         mode: resolvedMode,
+        context: context?.trim() || undefined,
       };
       setRuns((prev) => [run, ...prev]);
       setActiveRunId(run.id);
@@ -87,10 +94,45 @@ export const useAgentWorkspace = (): UseAgentWorkspaceResult => {
     } finally {
       setLoading(false);
     }
-  }, [question, mode, provider, model, isLoggedIn]);
+  }, [question, context, mode, provider, model, isLoggedIn]);
 
   const selectRun = useCallback((id: string) => {
     setActiveRunId(id);
+  }, []);
+
+  const reuseRun = useCallback(
+    (id: string) => {
+      const target = runs.find((run) => run.id === id);
+      if (!target) return;
+      setQuestion(target.question);
+      setMode(target.mode);
+      setProviderState(target.provider);
+      if (target.model) {
+        setModel(target.model);
+      } else {
+        setModel(PROVIDER_CONFIG[target.provider].models[0]?.value);
+      }
+      setContext(target.context || '');
+    },
+    [runs, setMode, setProviderState, setModel, setContext]
+  );
+
+  const removeRun = useCallback((id: string) => {
+    setRuns((prev) => {
+      const nextRuns = prev.filter((run) => run.id !== id);
+      setActiveRunId((prevActive) => {
+        if (prevActive === id) {
+          return nextRuns[0]?.id ?? null;
+        }
+        return prevActive;
+      });
+      return nextRuns;
+    });
+  }, []);
+
+  const clearRuns = useCallback(() => {
+    setRuns([]);
+    setActiveRunId(null);
   }, []);
 
   const clearError = useCallback(() => setError(null), []);
@@ -98,11 +140,13 @@ export const useAgentWorkspace = (): UseAgentWorkspaceResult => {
   return {
     question,
     setQuestion,
+    context,
+    setContext,
     mode,
     setMode,
     provider,
     setProvider: (value: AgentProvider) => {
-      setProvider(value);
+      setProviderState(value);
       setModel(PROVIDER_CONFIG[value].models[0]?.value);
     },
     model,
@@ -110,6 +154,9 @@ export const useAgentWorkspace = (): UseAgentWorkspaceResult => {
     runs,
     activeRun,
     selectRun,
+    reuseRun,
+    removeRun,
+    clearRuns,
     submit,
     loading,
     error,

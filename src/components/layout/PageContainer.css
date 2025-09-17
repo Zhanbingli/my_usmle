@@ -1,0 +1,79 @@
+.page-container {
+  position: relative;
+  border-radius: var(--app-radius-xl);
+  border: 1px solid rgba(99, 102, 241, 0.14);
+  box-shadow: var(--app-shadow-sm);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  overflow: hidden;
+  margin-bottom: 32px;
+}
+
+.page-container--padded {
+  padding: 36px;
+}
+
+.page-container--surface {
+  background: var(--app-color-surface);
+}
+
+.page-container--glass {
+  background: var(--app-color-surface-alt);
+  backdrop-filter: blur(18px);
+}
+
+.page-container--gradient {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.92) 0%, rgba(14, 165, 233, 0.78) 100%);
+  color: white;
+  border: none;
+  box-shadow: var(--app-shadow-md);
+}
+
+.page-container--gradient .ant-typography,
+.page-container--gradient .ant-typography-secondary,
+.page-container--gradient .ant-typography strong {
+  color: inherit;
+}
+
+.page-container--narrow {
+  max-width: 860px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.page-container--wide {
+  max-width: 100%;
+}
+
+.page-container--full {
+  max-width: none;
+  border-radius: 0;
+  margin-left: calc(-1 * (var(--page-gutter, 32px)));
+  margin-right: calc(-1 * (var(--page-gutter, 32px)));
+}
+
+.page-container:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--app-shadow-md);
+}
+
+@media (max-width: 992px) {
+  .page-container--padded {
+    padding: 28px;
+  }
+}
+
+@media (max-width: 768px) {
+  .page-container {
+    margin-bottom: 24px;
+  }
+
+  .page-container--padded {
+    padding: 24px;
+  }
+}
+
+@media (max-width: 576px) {
+  .page-container--padded {
+    padding: 20px;
+  }
+}

@@ -1,120 +1,66 @@
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  background-color: #f5f8fa;
-}
-
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
-}
-
 :root {
-  --primary-color: #2196f3;
-  --secondary-color: #0d47a1;
-  --accent-color: #ff5722;
-  --danger-color: #f44336;
-  --success-color: #4caf50;
-  --warning-color: #ff9800;
-  --info-color: #2196f3;
-  --text-primary: #333;
-  --text-secondary: #666;
-  --text-light: #999;
-  --background-light: #f5f8fa;
-  --background-white: #fff;
-  --box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --app-font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  --app-color-text-primary: #1f2937;
+  --app-color-text-secondary: #4b5563;
+  --app-color-text-tertiary: #6b7280;
+  --app-color-primary: #6366f1;
+  --app-color-primary-strong: #4f46e5;
+  --app-color-primary-soft: rgba(99, 102, 241, 0.12);
+  --app-color-success: #10b981;
+  --app-color-danger: #ef4444;
+  --app-color-surface: #ffffff;
+  --app-color-surface-alt: rgba(255, 255, 255, 0.72);
+  --app-color-surface-muted: rgba(255, 255, 255, 0.55);
+  --app-color-border: rgba(99, 102, 241, 0.18);
+  --app-radius-md: 12px;
+  --app-radius-lg: 20px;
+  --app-radius-xl: 28px;
+  --app-shadow-sm: 0 10px 30px rgba(15, 23, 42, 0.08);
+  --app-shadow-md: 0 24px 60px rgba(79, 70, 229, 0.15);
+  --app-shadow-lg: 0 40px 90px rgba(79, 70, 229, 0.18);
+  --app-gradient-background: radial-gradient(circle at top left, rgba(99, 102, 241, 0.2), transparent 55%),
+    radial-gradient(circle at bottom right, rgba(129, 140, 248, 0.24), transparent 60%),
+    #f5f7ff;
 }
 
-a {
-  color: var(--primary-color);
-  text-decoration: none;
-}
-
-a:hover {
-  text-decoration: underline;
-}
-
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 20px;
-}
-
-.card {
-  background-color: var(--background-white);
-  border-radius: 8px;
-  box-shadow: var(--box-shadow);
-  padding: 20px;
-  margin-bottom: 20px;
-}
-
-.btn {
-  display: inline-block;
-  padding: 10px 16px;
-  font-size: 16px;
-  font-weight: 500;
-  text-align: center;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.2s, transform 0.1s;
-}
-
-.btn:active {
-  transform: translateY(1px);
-}
-
-.btn-primary {
-  background-color: var(--primary-color);
-  color: white;
-}
-
-.btn-primary:hover {
-  background-color: var(--secondary-color);
-}
-
-.btn-secondary {
-  background-color: #eee;
-  color: var(--text-primary);
-}
-
-.btn-secondary:hover {
-  background-color: #ddd;
-}
-
-.btn-danger {
-  background-color: var(--danger-color);
-  color: white;
-}
-
-.btn-danger:hover {
-  background-color: #d32f2f;
-}
-
-.form-group {
-  margin-bottom: 20px;
-}
-
-.form-control {
-  display: block;
-  width: 100%;
-  padding: 12px;
-  font-size: 16px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+* {
   box-sizing: border-box;
 }
 
-.form-control:focus {
-  border-color: var(--primary-color);
-  outline: none;
+html,
+body,
+#root {
+  height: 100%;
 }
 
-.textarea {
-  min-height: 120px;
-  resize: vertical;
-} 
+body {
+  margin: 0;
+  font-family: var(--app-font-family);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: var(--app-gradient-background);
+  background-attachment: fixed;
+  color: var(--app-color-text-primary);
+}
+
+code {
+  font-family: 'Fira Code', SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+}
+
+a {
+  color: var(--app-color-primary);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  color: var(--app-color-primary-strong);
+  text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+  body {
+    background-attachment: scroll;
+  }
+}
