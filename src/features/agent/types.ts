@@ -4,9 +4,19 @@ export type AgentProvider = 'gemini' | 'openai' | 'claude';
 export interface AgentActAction {
   step: number;
   tool: string;
-  args: any;
+  args: Record<string, unknown>;
   status: number;
   ok: boolean;
+  output?: unknown;
+}
+
+export interface AgentActMeta {
+  durationMs: number | null;
+  provider: AgentProvider | null;
+  model: string | null;
+  mode: AgentMode | null;
+  usage?: Record<string, unknown> | null;
+  offline?: boolean;
 }
 
 export interface AgentActResponse {
@@ -14,6 +24,7 @@ export interface AgentActResponse {
   steps: number;
   actions: AgentActAction[];
   citations?: Array<{ pmid: string; title: string; url: string }>;
+  meta?: AgentActMeta;
 }
 
 export interface AgentModelOption {

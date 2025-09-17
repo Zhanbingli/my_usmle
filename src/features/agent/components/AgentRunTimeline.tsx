@@ -9,6 +9,15 @@ interface AgentRunTimelineProps {
   run: AgentRun | null;
 }
 
+const formatValue = (value: unknown): string => {
+  try {
+    const stringified = typeof value === 'string' ? value : JSON.stringify(value);
+    return stringified.length > 180 ? `${stringified.slice(0, 180)}…` : stringified;
+  } catch (error) {
+    return '[无法序列化结果]';
+  }
+};
+
 const AgentRunTimeline: React.FC<AgentRunTimelineProps> = ({ run }) => {
   return (
     <Card title="执行轨迹" extra={<ThunderboltOutlined />}> 
@@ -25,6 +34,16 @@ const AgentRunTimeline: React.FC<AgentRunTimelineProps> = ({ run }) => {
                   <Tag color={action.ok ? 'green' : 'red'}>{action.ok ? '成功' : '失败'}</Tag>
                 </Space>
                 <Text type="secondary">状态码：{action.status}</Text>
+                {action.args && Object.keys(action.args).length > 0 && (
+                  <Text type="secondary">
+                    参数：{formatValue(action.args)}
+                  </Text>
+                )}
+                {typeof action.output !== 'undefined' && action.output !== null && (
+                  <Text type="secondary">
+                    输出：{formatValue(action.output)}
+                  </Text>
+                )}
               </Space>
             </Card>
           ))}

@@ -65,14 +65,18 @@ export const useAgentWorkspace = (): UseAgentWorkspaceResult => {
 
     try {
       const response = await agentApi.act({ goal: question, mode, provider, model });
+      const responseMeta = response.meta;
+      const resolvedProvider = (responseMeta?.provider as AgentProvider | null) || provider;
+      const resolvedModel = responseMeta?.model ?? model;
+      const resolvedMode = (responseMeta?.mode as AgentMode | null) || mode;
       const run: AgentRun = {
         id: `${Date.now()}`,
         question: question.trim(),
         response,
         createdAt: new Date().toISOString(),
-        provider,
-        model,
-        mode,
+        provider: resolvedProvider,
+        model: resolvedModel,
+        mode: resolvedMode,
       };
       setRuns((prev) => [run, ...prev]);
       setActiveRunId(run.id);

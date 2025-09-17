@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, Divider, Space, Typography } from 'antd';
+import { Card, Divider, Space, Tag, Typography } from 'antd';
 import { AgentRun } from '../types';
 
 const { Title, Text, Paragraph } = Typography;
@@ -28,12 +28,36 @@ const AgentRunDetail: React.FC<AgentRunDetailProps> = ({ run, isLoading }) => {
     );
   }
 
+  const meta = run.response.meta;
+  const durationLabel = meta?.durationMs
+    ? `${(meta.durationMs / 1000).toFixed(2)} 秒`
+    : null;
+  const usage = meta?.usage && typeof meta.usage === 'object' ? meta.usage : null;
+
   return (
     <Card className="agent-run-detail" bordered={false}>
       <Space direction="vertical" size={24} style={{ width: '100%' }}>
         <section>
           <Text type="secondary">问题</Text>
           <Title level={4}>{run.question}</Title>
+        </section>
+        <section>
+          <Text type="secondary">执行信息</Text>
+          <Space size={8} wrap style={{ marginTop: 8 }}>
+            <Tag color="geekblue">Provider: {meta?.provider ?? run.provider}</Tag>
+            {meta?.model && <Tag color="purple">Model: {meta.model}</Tag>}
+            <Tag color="blue">Mode: {(meta?.mode ?? run.mode).toUpperCase()}</Tag>
+            {meta?.offline && <Tag color="orange">离线模拟</Tag>}
+            {durationLabel && <Tag color="green">耗时 {durationLabel}</Tag>}
+          </Space>
+          {usage && (
+            <Text type="secondary" style={{ display: 'block', marginTop: 6 }}>
+              Token 使用：
+              {Object.entries(usage)
+                .map(([key, value]) => `${key}: ${value as string | number}`)
+                .join(' / ')}
+            </Text>
+          )}
         </section>
         <Divider />
         <section>

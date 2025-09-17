@@ -95,8 +95,22 @@ async function runToolByName(name, args, reqUser) {
   }
 }
 
+function createToolRegistry() {
+  return {
+    declarations: toolDeclarations,
+    async invoke(name, args, context = {}) {
+      try {
+        return await runToolByName(name, args, context.user);
+      } catch (error) {
+        console.error('工具执行失败:', name, error.message);
+        return { statusCode: 500, success: false, error: error.message };
+      }
+    },
+  };
+}
+
 module.exports = {
   toolDeclarations,
   runToolByName,
+  createToolRegistry,
 };
-
