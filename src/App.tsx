@@ -3,11 +3,13 @@ import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ConfigProvider, theme, Spin } from 'antd';
 import zhCN from 'antd/locale/zh_CN';
+import enUS from 'antd/locale/en_US';
 
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import ErrorBoundary from './components/ErrorBoundary';
+import { LanguageProvider, useLanguage } from './contexts/LanguageContext';
 import './App.css';
 const HomePage = React.lazy(() => import('./pages/HomePage'));
 const CasesPage = React.lazy(() => import('./pages/CasesPage'));
@@ -45,12 +47,14 @@ const antdTheme = {
     colorInfo: '#1890ff',
     borderRadius: 8,
     fontSize: 14,
+    fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif",
   },
 };
 
 // 受保护的路由组件
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isLoggedIn, loading } = useAuth();
+  const { t } = useLanguage();
   const location = useLocation();
 
   if (loading) {
@@ -61,7 +65,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
         alignItems: 'center', 
         height: '100vh' 
       }}>
-        <Spin size="large" />
+        <Spin size="large" tip={t('common.loadingUser')} />
       </div>
     );
   }
@@ -76,6 +80,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 // 公开路由组件（已登录用户不能访问）
 const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isLoggedIn, loading } = useAuth();
+  const { t } = useLanguage();
 
   if (loading) {
     return (
@@ -85,7 +90,7 @@ const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         alignItems: 'center', 
         height: '100vh' 
       }}>
-        <Spin size="large" />
+        <Spin size="large" tip={t('common.loadingUser')} />
       </div>
     );
   }
@@ -100,6 +105,7 @@ const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 // 应用内容组件
 const AppContent: React.FC = () => {
   const { loading } = useAuth();
+  const { t, language } = useLanguage();
 
   if (loading) {
     return (
@@ -112,22 +118,25 @@ const AppContent: React.FC = () => {
         gap: '16px'
       }}>
         <Spin size="large" />
-        <div style={{ color: '#666' }}>正在加载用户信息...</div>
+        <div style={{ color: '#666' }}>{t('common.loadingUser')}</div>
       </div>
     );
   }
 
+  const locale = language === 'zh' ? zhCN : enUS;
+
   return (
-    <div className="app">
-      <Header />
-      <main className="app__main">
-        <div className="app__content">
-          <Suspense fallback={
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '40vh' }}>
-              <Spin size="large" />
-            </div>
-          }>
-          <Routes>
+    <ConfigProvider locale={locale} theme={antdTheme}>
+      <div className="app">
+        <Header />
+        <main className="app__main">
+          <div className="app__content">
+            <Suspense fallback={
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '40vh' }}>
+                <Spin size="large" />
+              </div>
+            }>
+            <Routes>
             {/* 公开路由 */}
             <Route 
               path="/login" 
@@ -216,25 +225,26 @@ const AppContent: React.FC = () => {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
           </Suspense>
-        </div>
-      </main>
-      <Footer />
-    </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    </ConfigProvider>
   );
 };
 
-function App() {
+const AppProviders: React.FC = () => {
   return (
-    <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <ConfigProvider locale={zhCN} theme={antdTheme}>
+    <LanguageProvider>
+      <ErrorBoundary>
+        <QueryClientProvider client={queryClient}>
           <AuthProvider>
             <AppContent />
           </AuthProvider>
-        </ConfigProvider>
-      </QueryClientProvider>
-    </ErrorBoundary>
+        </QueryClientProvider>
+      </ErrorBoundary>
+    </LanguageProvider>
   );
-}
+};
 
-export default App; 
+export default AppProviders; 

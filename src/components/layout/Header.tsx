@@ -1,5 +1,5 @@
 import React from 'react';
-import { Layout, Menu, Button, Avatar, Dropdown, Space, Typography } from 'antd';
+import { Layout, Menu, Button, Avatar, Dropdown, Space, Typography, Segmented } from 'antd';
 import { 
   HomeOutlined, 
   RobotOutlined, 
@@ -14,6 +14,7 @@ import {
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useLanguage } from '../../contexts/LanguageContext';
 import './Header.css';
 
 const { Header: AntHeader } = Layout;
@@ -23,33 +24,34 @@ const Header: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { currentUser, userProfile, isLoggedIn, logout } = useAuth();
+  const { language, setLanguage, t } = useLanguage();
 
   const menuItems = [
     {
       key: '/',
       icon: <HomeOutlined />,
-      label: '首页',
+      label: t('layout.menu.home'),
     },
     {
       key: '/agent',
       icon: <RobotOutlined />,
-      label: '智能Agent',
+      label: t('layout.menu.agent'),
     },
     {
       key: '/cases',
       icon: <BookOutlined />,
-      label: '病例训练',
+      label: t('layout.menu.cases'),
     },
     {
       key: '/pubmed',
       icon: <SearchOutlined />,
-      label: 'PubMed检索',
+      label: t('layout.menu.pubmed'),
     },
     // 只有管理员才能看到数据分析
     ...(userProfile?.role === 'admin' ? [{
       key: '/analytics',
       icon: <BarChartOutlined />,
-      label: '数据分析',
+      label: t('layout.menu.analytics'),
     }] : [])
   ];
 
@@ -78,17 +80,17 @@ const Header: React.FC = () => {
     {
       key: 'profile',
       icon: <UserOutlined />,
-      label: '个人资料',
+      label: t('common.profile'),
     },
     {
       key: 'subscription',
       icon: <CrownOutlined />,
-      label: '订阅管理',
+      label: t('common.subscription'),
     },
     {
       key: 'settings',
       icon: <SettingOutlined />,
-      label: '设置',
+      label: t('common.settings'),
     },
     {
       type: 'divider' as const,
@@ -96,7 +98,7 @@ const Header: React.FC = () => {
     {
       key: 'logout',
       icon: <LogoutOutlined />,
-      label: '退出登录',
+      label: t('common.logout'),
     },
   ];
 
@@ -117,7 +119,7 @@ const Header: React.FC = () => {
       <div className="app-header__inner">
         <div className="app-header__brand" onClick={() => navigate('/')}>
           <MedicineBoxOutlined className="app-header__brand-icon" />
-          <Text className="app-header__brand-name">医学AI平台</Text>
+          <Text className="app-header__brand-name">{t('common.appName')}</Text>
         </div>
 
         <Menu
@@ -150,13 +152,22 @@ const Header: React.FC = () => {
           ) : (
             <Space size={12}>
               <Button type="default" onClick={handleLogin}>
-                登录
+                {t('common.login')}
               </Button>
               <Button type="primary" onClick={handleRegister}>
-                注册
+                {t('common.register')}
               </Button>
             </Space>
           )}
+          <Segmented
+            value={language}
+            onChange={(value) => setLanguage(value as 'zh' | 'en')}
+            options={[
+              { label: t('common.language.zh'), value: 'zh' },
+              { label: t('common.language.en'), value: 'en' },
+            ]}
+            size="small"
+          />
         </div>
       </div>
     </AntHeader>

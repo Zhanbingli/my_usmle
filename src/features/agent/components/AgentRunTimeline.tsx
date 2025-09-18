@@ -2,6 +2,7 @@ import React from 'react';
 import { Empty, Space, Tag, Timeline, Typography } from 'antd';
 import { ThunderboltOutlined } from '@ant-design/icons';
 import { AgentRun } from '../types';
+import { useLanguage } from '../../../contexts/LanguageContext';
 
 const { Text, Title } = Typography;
 
@@ -19,6 +20,7 @@ const formatValue = (value: unknown): string => {
 };
 
 const AgentRunTimeline: React.FC<AgentRunTimelineProps> = ({ run }) => {
+  const { t } = useLanguage();
   const hasActions = Boolean(run && run.response.actions && run.response.actions.length > 0);
 
   return (
@@ -26,13 +28,13 @@ const AgentRunTimeline: React.FC<AgentRunTimelineProps> = ({ run }) => {
       <div className="agent-timeline__header">
         <Space size={8} align="center">
           <ThunderboltOutlined style={{ color: '#6366f1' }} />
-          <Title level={5} style={{ margin: 0 }}>执行轨迹</Title>
+          <Title level={5} style={{ margin: 0 }}>{t('agent.timelineTitle')}</Title>
         </Space>
       </div>
 
       {!hasActions ? (
         <div className="agent-timeline__empty">
-          <Empty description="暂无工具调用记录" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+          <Empty description={t('agent.timelineEmpty')} image={Empty.PRESENTED_IMAGE_SIMPLE} />
         </div>
       ) : (
         <Timeline
@@ -43,14 +45,14 @@ const AgentRunTimeline: React.FC<AgentRunTimelineProps> = ({ run }) => {
                 <Space size={8} wrap align="start">
                   <Tag color="blue">STEP {action.step}</Tag>
                   <Text strong>{action.tool}</Text>
-                  <Tag color={action.ok ? 'green' : 'red'}>{action.ok ? '成功' : '失败'}</Tag>
+                  <Tag color={action.ok ? 'green' : 'red'}>{action.ok ? t('agent.actionSuccess') : t('agent.actionFailure')}</Tag>
                 </Space>
-                <Text type="secondary">状态码：{action.status}</Text>
+                <Text type="secondary">{t('agent.statusCode')}：{action.status}</Text>
                 {action.args && Object.keys(action.args).length > 0 && (
-                  <Text type="secondary">参数：{formatValue(action.args)}</Text>
+                  <Text type="secondary">{t('agent.params')}：{formatValue(action.args)}</Text>
                 )}
                 {typeof action.output !== 'undefined' && action.output !== null && (
-                  <Text type="secondary">输出：{formatValue(action.output)}</Text>
+                  <Text type="secondary">{t('agent.output')}：{formatValue(action.output)}</Text>
                 )}
               </div>
             ),

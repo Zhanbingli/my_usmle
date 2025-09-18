@@ -6,6 +6,7 @@ import AgentRunDetail from './AgentRunDetail';
 import AgentRunTimeline from './AgentRunTimeline';
 import { useAgentWorkspace } from '../hooks/useAgentWorkspace';
 import PageContainer from '../../../components/layout/PageContainer';
+import { useLanguage } from '../../../contexts/LanguageContext';
 import '../styles/AgentWorkspace.css';
 
 const AgentWorkspace: React.FC = () => {
@@ -37,21 +38,22 @@ const AgentWorkspace: React.FC = () => {
     templates,
     applyTemplate,
   } = useAgentWorkspace();
+  const { t } = useLanguage();
 
   return (
     <div className="agent-workspace">
       <PageContainer variant="gradient" padded className="agent-hero">
         <Space direction="vertical" size={12}>
           <Typography.Title level={2} style={{ color: 'white', marginBottom: 0 }}>
-            临床决策智能助手
+            {t('agent.heroTitle')}
           </Typography.Title>
           <Typography.Paragraph style={{ color: 'rgba(255,255,255,0.85)', maxWidth: 560 }}>
-            将文献检索、诊断推理与病例拆解整合在一体的智能 Agent，支持快速生成循证回答并追踪工具调用链路。
+            {t('agent.heroSubtitle')}
           </Typography.Paragraph>
           <Space size={[8, 12]} wrap>
-            <Tag color="gold">推理链可视化</Tag>
-            <Tag color="cyan">PubMed 实时检索</Tag>
-            <Tag color="green">病例演练模式</Tag>
+            <Tag color="gold">{t('agent.heroTags.reasoning')}</Tag>
+            <Tag color="cyan">{t('agent.heroTags.pubmed')}</Tag>
+            <Tag color="green">{t('agent.heroTags.cases')}</Tag>
           </Space>
         </Space>
       </PageContainer>
@@ -81,7 +83,7 @@ const AgentWorkspace: React.FC = () => {
         />
         {error && (
           <Alert
-            message="Agent 调用失败"
+            message={t('agent.errorTitle')}
             description={error}
             type="error"
             showIcon

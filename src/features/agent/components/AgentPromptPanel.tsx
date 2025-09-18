@@ -13,6 +13,7 @@ import {
 } from '@ant-design/icons';
 import { AgentMode, AgentProvider, AgentPromptTemplate } from '../types';
 import { MODE_META, PROVIDER_CONFIG } from '../constants';
+import { useLanguage } from '../../../contexts/LanguageContext';
 
 const { TextArea } = Input;
 const { Title, Text } = Typography;
@@ -69,6 +70,7 @@ const AgentPromptPanel: React.FC<AgentPromptPanelProps> = ({
   onApplyTemplate,
 }) => {
   const canSubmit = Boolean(question.trim());
+  const { t, language } = useLanguage();
 
   const segmentedOptions = MODE_META.map((item) => ({
     label: (
@@ -85,24 +87,24 @@ const AgentPromptPanel: React.FC<AgentPromptPanelProps> = ({
     <div className="agent-composer">
       <div className="agent-composer__header">
         <div>
-          <Title level={3} style={{ marginBottom: 4 }}>医学智能 Agent</Title>
+          <Title level={3} style={{ marginBottom: 4 }}>{t('agent.composerTitle')}</Title>
           <Typography.Paragraph type="secondary" style={{ marginBottom: 0 }}>
-            结合文献检索、病例推演与多模型推理，帮助你快速获得可行的医学洞察。
+            {t('agent.composerSubtitle')}
           </Typography.Paragraph>
         </div>
         <Space size={12} align="center">
-          <Tag color="purple" icon={<RocketOutlined />}>多模态推理 Beta</Tag>
-          <Tooltip title="清空当前会话历史">
+          <Tag color="purple" icon={<RocketOutlined />}>{t('agent.badges.multimodal')}</Tag>
+          <Tooltip title={t('agent.resetHistory')}>
             <Button
               type="text"
               icon={<HistoryOutlined />}
               onClick={onClearHistory}
               disabled={runsCount === 0}
             >
-              清空
+              {t('agent.resetHistory')}
             </Button>
           </Tooltip>
-          <Badge count={runsCount} size="small" color="#6366f1" title="已保存的回答数" />
+          <Badge count={runsCount} size="small" color="#6366f1" title={t('agent.historyCountTooltip')} />
         </Space>
       </div>
 
@@ -142,7 +144,7 @@ const AgentPromptPanel: React.FC<AgentPromptPanelProps> = ({
         </div>
 
         <div className="agent-composer__meta-item">
-          <Text type="secondary">模式</Text>
+          <Text type="secondary">Mode</Text>
           <Segmented
             value={mode}
             onChange={(value) => onModeChange(value as AgentMode)}
@@ -157,10 +159,10 @@ const AgentPromptPanel: React.FC<AgentPromptPanelProps> = ({
         <div className="agent-composer__templates-header">
           <Space size={8} align="center">
             <AppstoreAddOutlined style={{ color: '#4f46e5' }} />
-            <Text strong>快速模板</Text>
-            <Tag color="blue" bordered={false}>一键套用</Tag>
+            <Text strong>{t('agent.templatesTitle')}</Text>
+            <Tag color="blue" bordered={false}>One-click</Tag>
           </Space>
-          <Text type="secondary">选择常用场景，系统将自动填入提示与背景</Text>
+          <Text type="secondary">{t('agent.templatesSubtitle')}</Text>
         </div>
         <div className="agent-composer__templates-grid">
           {templates.map((template) => (
@@ -171,29 +173,41 @@ const AgentPromptPanel: React.FC<AgentPromptPanelProps> = ({
               className="agent-template-card"
               onClick={() => onApplyTemplate(template)}
             >
-              <Space direction="vertical" size={8} style={{ width: '100%' }}>
-                <Space align="center" size={8}>
-                  <Text strong>{template.title}</Text>
-                  <Tag color="purple" bordered={false}>套用</Tag>
-                </Space>
-                <Text type="secondary">{template.description}</Text>
+                <Space direction="vertical" size={8} style={{ width: '100%' }}>
+                  <Space align="center" size={8}>
+                    <Text strong>{template.title}</Text>
+                    <Tag color="purple" bordered={false}>{t('agent.templateApply')}</Tag>
+                  </Space>
+                  <Text type="secondary">{template.description}</Text>
                 <Space size={6} wrap>
-                  {template.mode && <Tag color="geekblue">模式：{template.mode.toUpperCase()}</Tag>}
-                  {template.provider && <Tag color="cyan">Provider：{PROVIDER_CONFIG[template.provider].label}</Tag>}
+                  {template.mode && (
+                    <Tag color="geekblue">
+                      {language === 'zh'
+                        ? `模式：${template.mode.toUpperCase()}`
+                        : `Mode: ${template.mode.toUpperCase()}`}
+                    </Tag>
+                  )}
+                  {template.provider && (
+                    <Tag color="cyan">
+                      {language === 'zh'
+                        ? `模型：${PROVIDER_CONFIG[template.provider].label}`
+                        : `Provider: ${PROVIDER_CONFIG[template.provider].label}`}
+                    </Tag>
+                  )}
                 </Space>
-                <Button
-                  type="link"
-                  size="small"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    onApplyTemplate(template);
-                  }}
-                >
-                  立即填写
-                </Button>
-              </Space>
-            </Card>
-          ))}
+                  <Button
+                    type="link"
+                    size="small"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onApplyTemplate(template);
+                    }}
+                  >
+                    {t('agent.templateApply')}
+                  </Button>
+                </Space>
+              </Card>
+            ))}
         </div>
       </div>
 
@@ -203,7 +217,7 @@ const AgentPromptPanel: React.FC<AgentPromptPanelProps> = ({
             value={question}
             onChange={(e) => onQuestionChange(e.target.value)}
             autoSize={{ minRows: 3, maxRows: 6 }}
-            placeholder="描述你的临床问题、检索需求或病例场景..."
+            placeholder={t('agent.questionPlaceholder')}
             onPressEnter={(event) => {
               if (!event.shiftKey) {
                 event.preventDefault();
@@ -213,12 +227,12 @@ const AgentPromptPanel: React.FC<AgentPromptPanelProps> = ({
           />
           <div className="agent-composer__hint-row">
             <Text type="secondary">
-              按 Enter 直接发送，Shift + Enter 换行。
+              {t('agent.hintSend')}
             </Text>
             {!isAuthenticated && (
               <Space size={4}>
                 <LockOutlined style={{ color: '#f87171' }} />
-                <Text type="secondary">登录后可保存历史与引用</Text>
+                <Text type="secondary">{t('agent.hintLogin')}</Text>
               </Space>
             )}
           </div>
@@ -228,15 +242,15 @@ const AgentPromptPanel: React.FC<AgentPromptPanelProps> = ({
           <div className="agent-composer__context-header">
             <Space size={8}>
               <BulbOutlined />
-              <Text strong>附加背景 (可选)</Text>
+              <Text strong>{t('agent.contextTitle')}</Text>
             </Space>
-            <Text type="secondary">添加实验室指标、患者特征或约束条件</Text>
+            <Text type="secondary">{t('agent.contextSubtitle')}</Text>
           </div>
           <TextArea
             value={context}
             onChange={(e) => onContextChange(e.target.value)}
             autoSize={{ minRows: 2, maxRows: 4 }}
-            placeholder="例：患者 32 岁女性，怀孕 24 周，既往有 Ⅰ 型糖尿病史..."
+            placeholder={t('agent.contextPlaceholder')}
           />
         </div>
       </div>
@@ -251,10 +265,10 @@ const AgentPromptPanel: React.FC<AgentPromptPanelProps> = ({
             loading={loading}
             disabled={!canSubmit}
           >
-            生成回答
+            {t('common.generateAnswer')}
           </Button>
         </Space>
-        <Text type="secondary">平均响应耗时 ~8 秒</Text>
+        <Text type="secondary">{t('common.averageResponseTime')}</Text>
       </div>
 
       <Divider dashed style={{ margin: '28px 0' }} />
@@ -262,7 +276,7 @@ const AgentPromptPanel: React.FC<AgentPromptPanelProps> = ({
       <div className="agent-composer__suggestions">
         <Space size={12} align="start">
           <Text type="secondary" style={{ paddingTop: 6 }}>
-            试试这些提示：
+            {t('agent.suggestionsTitle')}
           </Text>
           <Space size={[8, 12]} wrap>
             {suggestions.map((prompt) => (

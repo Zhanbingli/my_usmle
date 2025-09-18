@@ -3,6 +3,7 @@ import { agentApi } from '../../../api/agentApi';
 import { AgentMode, AgentProvider, AgentPromptTemplate, AgentRun } from '../types';
 import { AGENT_TEMPLATES, PROVIDER_CONFIG, SUGGESTED_PROMPTS } from '../constants';
 import { useAuth } from '../../../contexts/AuthContext';
+import { useLanguage } from '../../../contexts/LanguageContext';
 
 interface UseAgentWorkspaceResult {
   question: string;
@@ -35,6 +36,7 @@ interface UseAgentWorkspaceResult {
 
 export const useAgentWorkspace = (): UseAgentWorkspaceResult => {
   const { isLoggedIn } = useAuth();
+  const { language } = useLanguage();
   const [question, setQuestion] = useState('');
   const [context, setContext] = useState('');
   const [mode, setMode] = useState<AgentMode>('auto');
@@ -175,7 +177,7 @@ export const useAgentWorkspace = (): UseAgentWorkspaceResult => {
     loading,
     error,
     clearError,
-    suggestions: SUGGESTED_PROMPTS,
+    suggestions: SUGGESTED_PROMPTS[language],
     providerOptions,
     modelOptions,
     isAuthenticated: isLoggedIn,

@@ -29,12 +29,20 @@ export const PROVIDER_CONFIG: Record<'gemini' | 'openai' | 'claude', AgentProvid
   },
 };
 
-export const SUGGESTED_PROMPTS = [
-  '总结最新的糖尿病管理指南亮点',
-  '给出胸痛患者的鉴别诊断流程',
-  '筛选近三年的高血压系统综述并提炼结论',
-  '模拟医患沟通，解释脑卒中的预警信号',
-];
+export const SUGGESTED_PROMPTS: Record<'zh' | 'en', string[]> = {
+  zh: [
+    '总结最新的糖尿病管理指南亮点',
+    '给出胸痛患者的鉴别诊断流程',
+    '筛选近三年的高血压系统综述并提炼结论',
+    '模拟医患沟通，解释脑卒中的预警信号',
+  ],
+  en: [
+    'Summarize the highlights of the latest diabetes management guidelines.',
+    'Outline a differential diagnosis workflow for a patient with persistent chest pain.',
+    'Find the most recent systematic reviews on hypertension and synthesize their conclusions.',
+    'Draft a patient-friendly explanation of stroke warning signs for clinic education.',
+  ],
+};
 
 export const MODE_META: Array<{ value: AgentMode; label: string; hint: string; icon: string }> = [
   { value: 'auto', label: '智能', hint: '自动决定工具使用策略', icon: 'CompassOutlined' },

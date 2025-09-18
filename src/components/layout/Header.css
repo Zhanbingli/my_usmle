@@ -81,6 +81,19 @@
   cursor: pointer;
 }
 
+.app-header__actions .ant-segmented {
+  background: rgba(99, 102, 241, 0.1);
+  border-radius: 999px;
+}
+
+.app-header__actions .ant-segmented-item {
+  padding: 4px 12px;
+}
+
+.app-header__actions .ant-segmented-thumb {
+  border-radius: 999px;
+}
+
 @media (max-width: 992px) {
   .app-header {
     width: calc(100% - 32px);
