@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Divider, Input, Select, Segmented, Space, Tag, Tooltip, Typography, Badge } from 'antd';
+import { Button, Card, Divider, Input, Select, Segmented, Space, Tag, Tooltip, Typography, Badge } from 'antd';
 import {
   SendOutlined,
   CompassOutlined,
@@ -8,9 +8,10 @@ import {
   HistoryOutlined,
   BulbOutlined,
   LockOutlined,
-  RocketOutlined
+  RocketOutlined,
+  AppstoreAddOutlined
 } from '@ant-design/icons';
-import { AgentMode, AgentProvider } from '../types';
+import { AgentMode, AgentProvider, AgentPromptTemplate } from '../types';
 import { MODE_META, PROVIDER_CONFIG } from '../constants';
 
 const { TextArea } = Input;
@@ -35,6 +36,8 @@ interface AgentPromptPanelProps {
   runsCount: number;
   loading: boolean;
   isAuthenticated: boolean;
+  templates: AgentPromptTemplate[];
+  onApplyTemplate: (template: AgentPromptTemplate) => void;
 }
 
 const MODE_ICON: Record<AgentMode, React.ReactNode> = {
@@ -62,6 +65,8 @@ const AgentPromptPanel: React.FC<AgentPromptPanelProps> = ({
   runsCount,
   loading,
   isAuthenticated,
+  templates,
+  onApplyTemplate,
 }) => {
   const canSubmit = Boolean(question.trim());
 
@@ -145,6 +150,50 @@ const AgentPromptPanel: React.FC<AgentPromptPanelProps> = ({
             size="large"
             block
           />
+        </div>
+      </div>
+
+      <div className="agent-composer__templates">
+        <div className="agent-composer__templates-header">
+          <Space size={8} align="center">
+            <AppstoreAddOutlined style={{ color: '#4f46e5' }} />
+            <Text strong>快速模板</Text>
+            <Tag color="blue" bordered={false}>一键套用</Tag>
+          </Space>
+          <Text type="secondary">选择常用场景，系统将自动填入提示与背景</Text>
+        </div>
+        <div className="agent-composer__templates-grid">
+          {templates.map((template) => (
+            <Card
+              key={template.id}
+              bordered={false}
+              hoverable
+              className="agent-template-card"
+              onClick={() => onApplyTemplate(template)}
+            >
+              <Space direction="vertical" size={8} style={{ width: '100%' }}>
+                <Space align="center" size={8}>
+                  <Text strong>{template.title}</Text>
+                  <Tag color="purple" bordered={false}>套用</Tag>
+                </Space>
+                <Text type="secondary">{template.description}</Text>
+                <Space size={6} wrap>
+                  {template.mode && <Tag color="geekblue">模式：{template.mode.toUpperCase()}</Tag>}
+                  {template.provider && <Tag color="cyan">Provider：{PROVIDER_CONFIG[template.provider].label}</Tag>}
+                </Space>
+                <Button
+                  type="link"
+                  size="small"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onApplyTemplate(template);
+                  }}
+                >
+                  立即填写
+                </Button>
+              </Space>
+            </Card>
+          ))}
         </div>
       </div>
 

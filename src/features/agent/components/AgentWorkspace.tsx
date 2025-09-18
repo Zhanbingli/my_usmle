@@ -34,6 +34,8 @@ const AgentWorkspace: React.FC = () => {
     removeRun,
     clearRuns,
     isAuthenticated,
+    templates,
+    applyTemplate,
   } = useAgentWorkspace();
 
   return (
@@ -74,6 +76,8 @@ const AgentWorkspace: React.FC = () => {
           runsCount={runs.length}
           loading={loading}
           isAuthenticated={isAuthenticated}
+          templates={templates}
+          onApplyTemplate={applyTemplate}
         />
         {error && (
           <Alert

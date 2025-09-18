@@ -49,3 +49,13 @@ export interface AgentRun {
   mode: AgentMode;
   context?: string;
 }
+
+export interface AgentPromptTemplate {
+  id: string;
+  title: string;
+  description: string;
+  question: string;
+  context?: string;
+  mode?: AgentMode;
+  provider?: AgentProvider;
+}

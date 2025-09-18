@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { agentApi } from '../../../api/agentApi';
-import { AgentMode, AgentProvider, AgentRun } from '../types';
-import { PROVIDER_CONFIG, SUGGESTED_PROMPTS } from '../constants';
+import { AgentMode, AgentProvider, AgentPromptTemplate, AgentRun } from '../types';
+import { AGENT_TEMPLATES, PROVIDER_CONFIG, SUGGESTED_PROMPTS } from '../constants';
 import { useAuth } from '../../../contexts/AuthContext';
 
 interface UseAgentWorkspaceResult {
@@ -29,6 +29,8 @@ interface UseAgentWorkspaceResult {
   providerOptions: Array<{ value: AgentProvider; label: string }>;
   modelOptions: Array<{ label: string; value: string; description?: string }>;
   isAuthenticated: boolean;
+  templates: AgentPromptTemplate[];
+  applyTemplate: (template: AgentPromptTemplate) => void;
 }
 
 export const useAgentWorkspace = (): UseAgentWorkspaceResult => {
@@ -137,6 +139,18 @@ export const useAgentWorkspace = (): UseAgentWorkspaceResult => {
 
   const clearError = useCallback(() => setError(null), []);
 
+  const applyTemplate = useCallback((template: AgentPromptTemplate) => {
+    setQuestion(template.question);
+    setContext(template.context || '');
+    if (template.mode) {
+      setMode(template.mode);
+    }
+    if (template.provider) {
+      setProviderState(template.provider);
+      setModel(PROVIDER_CONFIG[template.provider].models[0]?.value);
+    }
+  }, []);
+
   return {
     question,
     setQuestion,
@@ -165,5 +179,7 @@ export const useAgentWorkspace = (): UseAgentWorkspaceResult => {
     providerOptions,
     modelOptions,
     isAuthenticated: isLoggedIn,
+    templates: AGENT_TEMPLATES,
+    applyTemplate,
   };
 };

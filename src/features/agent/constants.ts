@@ -1,4 +1,4 @@
-import { AgentProviderConfig, AgentMode } from './types';
+import { AgentProviderConfig, AgentMode, AgentPromptTemplate } from './types';
 
 export const PROVIDER_CONFIG: Record<'gemini' | 'openai' | 'claude', AgentProviderConfig> = {
   gemini: {
@@ -40,4 +40,37 @@ export const MODE_META: Array<{ value: AgentMode; label: string; hint: string; i
   { value: 'auto', label: '智能', hint: '自动决定工具使用策略', icon: 'CompassOutlined' },
   { value: 'literature', label: '文献', hint: '优先调用文献检索工具', icon: 'DatabaseOutlined' },
   { value: 'case', label: '病例', hint: '聚焦病例推演与诊断', icon: 'ThunderboltOutlined' },
+];
+
+export const AGENT_TEMPLATES: AgentPromptTemplate[] = [
+  {
+    id: 'differential',
+    title: '鉴别诊断路径',
+    description: '针对复杂主诉生成标准化鉴别诊断列表与下一步检查建议。',
+    question: '请为以下主诉生成鉴别诊断列表，并给出优先级和下一步检查建议：持续胸痛伴呼吸困难。',
+    context: '患者男性，45 岁。吸烟史 20 年。既往高血压，未规律服药。体温 37.2℃，血压 156/96 mmHg，心率 104 次/分。',
+    mode: 'case',
+  },
+  {
+    id: 'literature-brief',
+    title: '快速文献综述',
+    description: '检索最新循证研究并输出摘要与推荐级别。',
+    question: '检索并总结最新版 2 型糖尿病合并慢性肾病治疗的循证指南，列出关键推荐及证据等级。',
+    mode: 'literature',
+  },
+  {
+    id: 'patient-education',
+    title: '患者宣教脚本',
+    description: '输出可直接用于患者沟通的通俗解释与注意事项。',
+    question: '请生成一份面向患者的宣教内容，解释房颤的风险、日常管理和复诊提醒。',
+    context: '患者女性，63 岁。房颤新确诊。需强调抗凝药物依从性与生活方式调整。',
+    mode: 'auto',
+  },
+  {
+    id: 'treatment-plan',
+    title: '处置方案速览',
+    description: '生成完整的评估、治疗、监测与随访计划，适用于值班速查。',
+    question: '请输出社区获得性肺炎的标准化诊疗方案，包含风险评估、经验用药、监测要点与复诊安排。',
+    mode: 'case',
+  },
 ];

@@ -90,6 +90,36 @@
   gap: 12px;
 }
 
+.agent-composer__templates {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.agent-composer__templates-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.agent-composer__templates-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.agent-template-card {
+  border-radius: var(--app-radius-lg) !important;
+  background: rgba(99, 102, 241, 0.08);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  cursor: pointer;
+}
+
+.agent-template-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--app-shadow-sm);
+}
+
 .agent-composer .ant-segmented {
   background: rgba(99, 102, 241, 0.08);
   padding: 6px;
@@ -265,6 +295,10 @@
   gap: 4px;
 }
 
+.agent-history__snippet {
+  margin-bottom: 0;
+}
+
 .agent-timeline {
   display: flex;
   flex-direction: column;
@@ -300,6 +334,10 @@
   .agent-composer__inputs {
     grid-template-columns: 1fr;
   }
+
+  .agent-composer__templates-grid {
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  }
 }
 
 @media (max-width: 768px) {
@@ -314,6 +352,10 @@
   .agent-composer__actions {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .agent-composer__templates-grid {
+    grid-template-columns: 1fr;
   }
 
   .agent-history__list {

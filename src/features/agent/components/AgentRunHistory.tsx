@@ -5,7 +5,7 @@ import { RobotOutlined, DeleteOutlined, EditOutlined, ClockCircleOutlined } from
 import { AgentRun } from '../types';
 import { PROVIDER_CONFIG } from '../constants';
 
-const { Text, Title } = Typography;
+const { Text, Title, Paragraph } = Typography;
 
 interface AgentRunHistoryProps {
   runs: AgentRun[];
@@ -59,6 +59,15 @@ const AgentRunHistory: React.FC<AgentRunHistoryProps> = ({
                     <ClockCircleOutlined /> {new Date(run.createdAt).toLocaleString()}
                   </Text>
                 </Space>
+                {run.response?.answer && (
+                  <Paragraph
+                    type="secondary"
+                    ellipsis={{ rows: 2 }}
+                    className="agent-history__snippet"
+                  >
+                    {run.response.answer}
+                  </Paragraph>
+                )}
               </button>
               <Space className="agent-history__actions" size={8}>
                 <Tooltip title="重新编辑">
