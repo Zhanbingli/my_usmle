@@ -2,6 +2,7 @@ import React from 'react';
 import { Alert, Space, Typography, Tag } from 'antd';
 import AgentPromptPanel from './AgentPromptPanel';
 import AgentRunHistory from './AgentRunHistory';
+import AgentConversationFeed from './AgentConversationFeed';
 import AgentRunDetail from './AgentRunDetail';
 import AgentRunTimeline from './AgentRunTimeline';
 import { useAgentWorkspace } from '../hooks/useAgentWorkspace';
@@ -94,13 +95,8 @@ const AgentWorkspace: React.FC = () => {
         )}
       </PageContainer>
 
-      <div className="agent-workspace__grid">
-        <div className="agent-workspace__main">
-          <PageContainer variant="surface" padded>
-            <AgentRunDetail run={activeRun} isLoading={loading} onReuse={reuseRun} />
-          </PageContainer>
-        </div>
-        <div className="agent-workspace__aside">
+      <div className="agent-chat-layout">
+        <div className="agent-chat-column agent-chat-column--history">
           <PageContainer variant="glass" padded>
             <AgentRunHistory
               runs={runs}
@@ -109,6 +105,27 @@ const AgentWorkspace: React.FC = () => {
               onReuse={reuseRun}
               onRemove={removeRun}
               onClear={clearRuns}
+            />
+          </PageContainer>
+        </div>
+
+        <div className="agent-chat-column agent-chat-column--feed">
+          <PageContainer variant="surface" padded>
+            <AgentConversationFeed
+              runs={runs}
+              activeRunId={activeRun?.id ?? null}
+              onSelect={selectRun}
+              onReuse={reuseRun}
+            />
+          </PageContainer>
+        </div>
+
+        <div className="agent-chat-column agent-chat-column--timeline">
+          <PageContainer variant="glass" padded>
+            <AgentRunDetail
+              run={activeRun}
+              isLoading={loading || activeRun?.status === 'loading'}
+              onReuse={reuseRun}
             />
           </PageContainer>
           <PageContainer variant="glass" padded>

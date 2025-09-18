@@ -36,7 +36,7 @@ interface UseAgentWorkspaceResult {
 
 export const useAgentWorkspace = (): UseAgentWorkspaceResult => {
   const { isLoggedIn } = useAuth();
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const [question, setQuestion] = useState('');
   const [context, setContext] = useState('');
   const [mode, setMode] = useState<AgentMode>('auto');
@@ -63,42 +63,59 @@ export const useAgentWorkspace = (): UseAgentWorkspaceResult => {
   );
 
   const submit = useCallback(async () => {
-    if (!question.trim()) return;
+    const trimmedQuestion = question.trim();
+    if (!trimmedQuestion) return;
+    const trimmedContext = context?.trim() || '';
 
     if (!isLoggedIn) {
-      setError('请先登录再使用智能 Agent 功能');
+      setError(t('agent.loginRequired'));
       return;
     }
 
+    const runId = `${Date.now()}`;
+    const pendingRun: AgentRun = {
+      id: runId,
+      question: trimmedQuestion,
+      context: trimmedContext || undefined,
+      createdAt: new Date().toISOString(),
+      provider,
+      model,
+      mode,
+      response: null,
+      status: 'loading',
+      error: null,
+    };
+
+    setRuns((prev) => [pendingRun, ...prev]);
+    setActiveRunId(runId);
+    setQuestion('');
     setLoading(true);
     setError(null);
 
     try {
-      const response = await agentApi.act({ goal: question, context: context || undefined, mode, provider, model });
+      const response = await agentApi.act({ goal: trimmedQuestion, context: trimmedContext || undefined, mode, provider, model });
       const responseMeta = response.meta;
       const resolvedProvider = (responseMeta?.provider as AgentProvider | null) || provider;
       const resolvedModel = responseMeta?.model ?? model;
       const resolvedMode = (responseMeta?.mode as AgentMode | null) || mode;
-      const run: AgentRun = {
-        id: `${Date.now()}`,
-        question: question.trim(),
-        response,
-        createdAt: new Date().toISOString(),
+      const readyRun: AgentRun = {
+        ...pendingRun,
         provider: resolvedProvider,
         model: resolvedModel,
         mode: resolvedMode,
-        context: context?.trim() || undefined,
+        response,
+        status: 'ready',
       };
-      setRuns((prev) => [run, ...prev]);
-      setActiveRunId(run.id);
-      setQuestion('');
+      setRuns((prev) => prev.map((item) => (item.id === runId ? readyRun : item)));
     } catch (err: any) {
       const message = err?.response?.data?.error || err?.message || 'Agent 调用失败';
       setError(message);
+      setRuns((prev) => prev.map((item) => (item.id === runId ? { ...item, status: 'error', error: message } : item)));
+      setQuestion(trimmedQuestion);
     } finally {
       setLoading(false);
     }
-  }, [question, context, mode, provider, model, isLoggedIn]);
+  }, [question, context, mode, provider, model, isLoggedIn, t]);
 
   const selectRun = useCallback((id: string) => {
     setActiveRunId(id);

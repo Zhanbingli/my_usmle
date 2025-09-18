@@ -42,12 +42,14 @@ export interface AgentProviderConfig {
 export interface AgentRun {
   id: string;
   question: string;
-  response: AgentActResponse;
+  response: AgentActResponse | null;
   createdAt: string;
   provider: AgentProvider;
   model?: string;
   mode: AgentMode;
   context?: string;
+  status?: 'loading' | 'ready' | 'error';
+  error?: string | null;
 }
 
 export interface AgentPromptTemplate {

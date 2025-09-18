@@ -47,7 +47,10 @@ const AgentRunHistory: React.FC<AgentRunHistoryProps> = ({
         </div>
       ) : (
         <div className="agent-history__list">
-          {runs.map((run) => (
+          {runs.map((run) => {
+            const status = run.status || (run.response ? 'ready' : undefined);
+            const statusColor = status === 'loading' ? 'gold' : status === 'error' ? 'red' : 'green';
+            return (
             <div
               key={run.id}
               className={clsx('agent-history__item', run.id === activeRunId && 'is-active')}
@@ -57,6 +60,7 @@ const AgentRunHistory: React.FC<AgentRunHistoryProps> = ({
                 <Space size={8} wrap>
                   <Tag>{PROVIDER_CONFIG[run.provider].label}</Tag>
                   <Tag color="blue">{run.mode.toUpperCase()}</Tag>
+                  {status && <Tag color={statusColor}>{t(`agent.status.${status}`)}</Tag>}
                   <Text type="secondary" className="agent-history__timestamp">
                     <ClockCircleOutlined /> {new Date(run.createdAt).toLocaleString(language === 'zh' ? 'zh-CN' : 'en-US')}
                   </Text>
@@ -80,7 +84,7 @@ const AgentRunHistory: React.FC<AgentRunHistoryProps> = ({
                 </Tooltip>
               </Space>
             </div>
-          ))}
+          );})}
         </div>
       )}
     </div>

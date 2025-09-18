@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Divider, Empty, message, Skeleton, Space, Tag, Tooltip, Typography } from 'antd';
+import { Alert, Button, Divider, Empty, message, Skeleton, Space, Tag, Tooltip, Typography } from 'antd';
 import { CopyOutlined, ReloadOutlined, FieldTimeOutlined, BookOutlined, ProfileOutlined } from '@ant-design/icons';
 import { AgentRun } from '../types';
 import { useLanguage } from '../../../contexts/LanguageContext';
@@ -19,20 +19,26 @@ const AgentRunDetail: React.FC<AgentRunDetailProps> = ({ run, isLoading, onReuse
       <div className="agent-panel-empty">
         <Empty description={
           <Space direction="vertical" size={2}>
-            <Text type="secondary">{t('agent.runPlaceholder')}</Text>
-            <Text type="secondary">{t('agent.hintLogin')}</Text>
+            <Text type="secondary">{t('agent.emptyTitle')}</Text>
+            <Text type="secondary">{t('agent.emptySubtitle')}</Text>
           </Space>
         } />
       </div>
     );
   }
 
-  const meta = run.response.meta;
+  const meta = run.response?.meta || null;
   const durationSeconds = meta?.durationMs ? (meta.durationMs / 1000).toFixed(2) : null;
   const usage = meta?.usage && typeof meta.usage === 'object' ? meta.usage : null;
+  const isLoadingRun = run.status === 'loading';
+  const isErrorRun = run.status === 'error';
 
   const handleCopyAnswer = async () => {
     try {
+      if (!run.response?.answer) {
+        message.info(t('common.emptyState'));
+        return;
+      }
       if (!navigator.clipboard) {
         message.info(t('common.copyUnsupported'));
         return;
@@ -100,14 +106,20 @@ const AgentRunDetail: React.FC<AgentRunDetailProps> = ({ run, isLoading, onReuse
       <Divider />
 
       <div className="agent-run-detail__body">
-        {isLoading ? (
+        {isErrorRun ? (
+          <Alert type="error" message={run.error || t('agent.errorTitle')} showIcon />
+        ) : isLoading || isLoadingRun ? (
           <Skeleton active paragraph={{ rows: 6 }} />
-        ) : (
+        ) : run.response?.answer ? (
           <Paragraph className="agent-answer">{run.response.answer}</Paragraph>
+        ) : (
+          <Paragraph className="agent-answer" type="secondary">
+            {t('agent.runThinking')}
+          </Paragraph>
         )}
       </div>
 
-      {run.response.citations && run.response.citations.length > 0 && (
+      {run.response?.citations && run.response.citations.length > 0 && (
         <div className="agent-run-detail__citations">
           <Text type="secondary">{t('agent.runCitations')}</Text>
           <Space direction="vertical" size={6} style={{ marginTop: 8 }}>

@@ -122,6 +122,7 @@ export const translations: Translations = {
         multimodal: '多模态推理 Beta'
       },
       errorTitle: 'Agent 调用失败',
+      loginRequired: '请先登录以使用智能 Agent 功能',
       composerTitle: '医学智能 Agent',
       composerSubtitle: '结合文献检索、病例推演与多模型推理，帮助你快速获得可行的医学洞察。',
       resetHistory: '清空',
@@ -155,7 +156,14 @@ export const translations: Translations = {
       duration: '耗时 {seconds} 秒',
       tokenUsage: 'Token：{usage}',
       actionSuccess: '成功',
-      actionFailure: '失败'
+      actionFailure: '失败',
+      status: {
+        loading: '生成中',
+        ready: '已完成',
+        error: '失败'
+      },
+      emptyTitle: '开始新的对话',
+      emptySubtitle: '描述你的医学问题或研究需求，Agent 将提供循证回答。'
     }
   },
   en: {
@@ -271,6 +279,7 @@ export const translations: Translations = {
         multimodal: 'Multimodal reasoning (Beta)'
       },
       errorTitle: 'Agent request failed',
+      loginRequired: 'Please sign in to use the intelligent agent.',
       composerTitle: 'Medical Intelligence Agent',
       composerSubtitle: 'Blend literature lookup, case reasoning, and multi-model inference for actionable medical insights.',
       resetHistory: 'Clear',
@@ -304,7 +313,14 @@ export const translations: Translations = {
       duration: 'Duration {seconds}s',
       tokenUsage: 'Tokens: {usage}',
       actionSuccess: 'Success',
-      actionFailure: 'Failed'
+      actionFailure: 'Failed',
+      status: {
+        loading: 'Generating',
+        ready: 'Completed',
+        error: 'Failed'
+      },
+      emptyTitle: 'Start a new conversation',
+      emptySubtitle: 'Describe your clinical question or research goal and the agent will respond with evidence-backed guidance.'
     }
   }
 };

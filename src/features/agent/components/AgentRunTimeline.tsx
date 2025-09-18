@@ -1,5 +1,5 @@
 import React from 'react';
-import { Empty, Space, Tag, Timeline, Typography } from 'antd';
+import { Alert, Empty, Skeleton, Space, Tag, Timeline, Typography } from 'antd';
 import { ThunderboltOutlined } from '@ant-design/icons';
 import { AgentRun } from '../types';
 import { useLanguage } from '../../../contexts/LanguageContext';
@@ -21,7 +21,7 @@ const formatValue = (value: unknown): string => {
 
 const AgentRunTimeline: React.FC<AgentRunTimelineProps> = ({ run }) => {
   const { t } = useLanguage();
-  const hasActions = Boolean(run && run.response.actions && run.response.actions.length > 0);
+  const hasActions = Boolean(run && run.response?.actions && run.response.actions.length > 0);
 
   return (
     <div className="agent-timeline">
@@ -32,13 +32,21 @@ const AgentRunTimeline: React.FC<AgentRunTimelineProps> = ({ run }) => {
         </Space>
       </div>
 
-      {!hasActions ? (
+      {!run ? (
+        <div className="agent-timeline__empty">
+          <Empty description={t('agent.timelineEmpty')} image={Empty.PRESENTED_IMAGE_SIMPLE} />
+        </div>
+      ) : run.status === 'loading' ? (
+        <Skeleton active paragraph={{ rows: 4 }} />
+      ) : run.status === 'error' ? (
+        <Alert type="error" message={run.error || t('agent.errorTitle')} showIcon />
+      ) : !hasActions ? (
         <div className="agent-timeline__empty">
           <Empty description={t('agent.timelineEmpty')} image={Empty.PRESENTED_IMAGE_SIMPLE} />
         </div>
       ) : (
         <Timeline
-          items={run!.response.actions.map((action) => ({
+          items={(run.response?.actions || []).map((action) => ({
             color: action.ok ? 'green' : 'red',
             children: (
               <div className="agent-timeline__item">
